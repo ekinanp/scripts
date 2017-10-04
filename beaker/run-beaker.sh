@@ -72,7 +72,7 @@ for i in `seq $n`; do
   # our pre-suite/agent-upgrade has finished running. Thus, there is no need to
   # proceed further with the rest of the acceptance tests so we kill the background
   # process. 
-  bundle exec beaker --hosts $hosts_cfg --type pe --keyfile $BEAKER_KEYFILE --tests $BEAKER_TESTSUITE --preserve-hosts never --helper $BEAKER_HELPER --pre-cleanup $BEAKER_PRECLEANUP --pre-suite $BEAKER_PRESUITE --log-prefix $log_prefix > /dev/null 2>&1 &
+  bundle exec beaker --hosts $hosts_cfg --type pe --keyfile $BEAKER_KEYFILE --tests $BEAKER_TESTSUITE --preserve-hosts onfail --helper $BEAKER_HELPER --pre-cleanup $BEAKER_PRECLEANUP --pre-suite $BEAKER_PRESUITE --log-prefix $log_prefix > /dev/null 2>&1 &
 
   # Get the directory containing all the log files (since logs are dated, we have to poll for
   # the creation of the log directory)
