@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-
-REPO_ROOT="~/GitHub/pe_acceptance_tests"
+TILDE=/Users/enis.inan
+REPO_ROOT="${TILDE}/GitHub/pe_acceptance_tests"
 SCRIPTS_ROOT="${REPO_ROOT}/scripts"
-RUN_BEAKER_PATH="~/GitHub/scripts/beaker/run-beaker.sh"
+RUN_BEAKER_PATH="${TILDE}/GitHub/scripts/beaker/run-beaker.sh"
 PREFIX="branches"
 
 # Get the arguments
