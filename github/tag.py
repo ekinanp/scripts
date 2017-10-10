@@ -1,26 +1,36 @@
-from github import Github
-from github import GithubException
-from github import InputGitAuthor
 from sys import argv
+from github import Github, GithubException, InputGitAuthor
 from datetime import datetime
+import os
+import time
+import re
+import json
 
-# TODO: Change this to the puppetlabs token after testing!
-TOKEN = "7c7e6001ce96cf1325f17c381119c888ac3b250e"
+# for some reason, python's isoformat does not display the utc offset
+# as a ":" separated value, and it does not have it as an option with
+# the datetime module.
+def current_date():
+    date = datetime.now()
+    utc_offset = time.strftime("%z")
+    return date.strftime("%Y-%m-%dT%H:%M:%S") + utc_offset[:3] + ":" + utc_offset[3:]
 
-# TODO: Is this necessary? Can remove it.
-TIMEOUT = 60
+ARGV_REGEX = re.compile("([^:]+):([^:]+):([^:]+)(?::([^:]+))?")
 
 argc = len(argv)
-if (argc < 4 or argc > 5):
-    print("USAGE: python tag.py <repo> <tag> <sha> [message]")
+match_obj = ARGV_REGEX.match(argv[1])
+if (argc != 2 and match_obj is None):
+    print("USAGE: python tag.py <repo>:<tag>:<sha>[:message]")
     exit(1)
 
-repo_name, new_tag, sha = argv[1], argv[2], argv[3] 
-message = argv[4] if argc == 5 else "Tagged to " + new_tag 
-repo = Github(login_or_token = TOKEN, timeout = TIMEOUT).get_user().get_repo(repo_name)
+repo_name, new_tag, sha = match_obj.groups()[:3] 
+message = match_obj.groups()[-1]
+if message is None : message = new_tag.join(['"', '"'])
 
-author = InputGitAuthor("Jenkins", "blah@puppet.com", datetime.now().__str__())
-repo.create_git_tag(new_tag, message, sha, "commit", author) 
+repo = Github(login_or_token = os.environ("GITHUB_TOKEN")).get_user().get_repo(repo_name)
+# TODO: What should go here as "Author" and "E-mail"?
+author = InputGitAuthor("Jenkins CI", "blah@puppet.com", current_date())
+tag = repo.create_git_tag(new_tag, message, sha, "foo", author) 
 ref = "refs/tags/"+new_tag
-repo.create_git_ref(ref, sha)
-print(ref)
+repo.create_git_ref(ref, tag.sha)
+
+print(json.dumps({"component" : repo_name, "ref" : ref}))
