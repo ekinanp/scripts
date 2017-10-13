@@ -16,7 +16,7 @@ fi
 underscored_component=${component/-/_}
 num=`jq ."${underscored_component}" components.json`
 pushd "${GITHUB_DIR}/${component}"
-  sha=`./add-feature.sh "${num}" | tail -1`
+  sha=`${GITHUB_DIR}/scripts/PA-978/add-feature.sh "${num}" | tail -1`
 popd
 tag="${num}"
 
