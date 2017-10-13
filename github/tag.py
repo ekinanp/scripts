@@ -19,7 +19,7 @@ if (argc < 4 or argc > 5):
     exit(1)
 
 repo_name, new_tag, sha = argv[1:4] 
-message = new_tag.join(['"', '"']) if argc == 4 else argv[4]
+message = new_tag.join(['"', '"']) if argc == 4 or not argv[4] else argv[4]
 
 repo = Github(login_or_token = os.environ["GITHUB_TOKEN"]).get_user().get_repo(repo_name)
 # TODO: What should go here as "Author" and "E-mail"?
