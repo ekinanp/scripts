@@ -19,9 +19,6 @@ pushd "${GITHUB_DIR}"
   pushd "${component}"
     git branch -D PA-978
     git checkout -b PA-978
-    cp "${PA978_DIR}/add-feature.sh" .
-    git add "add-feature.sh"
-    git commit -m "Initialized component with feature script!"
     git push --set-upstream origin PA-978 --force
   popd
 popd
@@ -34,5 +31,6 @@ pushd "${PROJECT_DIR}"
   git push --set-upstream origin PA-978 --force
 popd
 
-underscored_component="${{component/-/_}}"
+underscored_component="${component/-/_}"
+echo "underscored_component " "${underscored_component}"
 jq -r ".${underscored_component} = 1" components.json > components.json.tmp && mv components.json.tmp components.json
