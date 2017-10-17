@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+os="$1"
+
+if [[ -z "$os" ]]; then
+  echo "USAGE: ssh-vm <os>"
+  exit 1
+fi
+
+env_var=`echo "$os" | tr [[:lower:]] [[:upper:]]`"_HOST"
+ssh `printenv "$env_var"`

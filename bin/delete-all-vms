@@ -1,0 +1,18 @@
+#!/usr/bin/expect
+
+
+proc delete_all {{service "vmpooler"}} {
+  set VMFLOATY "/Users/enis.inan/GitHub/vmfloaty/bin/floaty"
+  if {$service eq "nspooler"} {
+    spawn ${VMFLOATY} delete --all --service ns
+  } else {
+    spawn ${VMFLOATY} delete --all
+  }
+
+  expect "N\]\r"
+  send "y\r"
+  expect "$ "
+}
+
+delete_all "vmpooler"
+delete_all "nspooler"
