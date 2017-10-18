@@ -3,7 +3,7 @@
 TILDE=/Users/enis.inan
 REPO_ROOT="${TILDE}/GitHub/pe_acceptance_tests"
 SCRIPTS_ROOT="${REPO_ROOT}/scripts"
-RUN_BEAKER_PATH="${SCRIPTS_ROOT}/PE-22505/run-beaker.sh"
+RUN_BEAKER_PATH="${TILDE}/GitHub/scripts/PE-22505/run-beaker.sh"
 PREFIX="branches"
 
 # Get the arguments
@@ -24,7 +24,7 @@ if [[ "$?" -ne 0 ]]; then
   exit 1
 fi
 
-ticket_branch="PE_22218_${branch}"
+ticket_branch="PE_22505_${branch}"
 git checkout -b "${ticket_branch}" || git checkout "${ticket_branch}"
 mkdir "$SCRIPTS_ROOT"
 cp "$RUN_BEAKER_PATH" "${SCRIPTS_ROOT}/"
@@ -44,3 +44,5 @@ tar -xvf "$branch_tar"
 popd
 popd
 rm "$branch_tar"
+git checkout "${branch}"
+git branch -D "${ticket_branch}"

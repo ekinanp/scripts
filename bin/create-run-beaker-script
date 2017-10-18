@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+USAGE="create-run-beaker-script <skeleton> [name]"
+TEMPLATE_PATH="/Users/enis.inan/GitHub/scripts/util/beaker-template.sh"
+
+skeleton="$1"
+name="$2"
+
+[[ -z "${skeleton}" ]] && echo "${USAGE}" && exit 1
+[[ -z "${name}" ]] && name="run-beaker.sh"
+
+cat "${skeleton}" > "${name}"
+echo "" >> "${name}"
+cat "${TEMPLATE_PATH}" >> "${name}"
+chmod a+x "${name}"

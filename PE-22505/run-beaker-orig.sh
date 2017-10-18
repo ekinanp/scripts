@@ -19,11 +19,8 @@ cleanup() {
 # Get the arguments
 USAGE="./scripts/run-beaker.sh <host-layout> <n> [results-dir]"
 
-#PE_VERSION=2016.1.2
-#PE_UPGRADE_VERSION=2017.3.0-rc11-37-g5d8c45d
-
-PE_VERSION=2016.4.8
-PE_UPGRADE_VERSION=2016.4.9-rc0-7-g78518c6
+PE_VERSION=2017.3.0
+PE_UPGRADE_VERSION=2017.3.1
 
 host_layout="$1"
 n="$2"
@@ -38,18 +35,22 @@ run_id=${host_layout}_${PE_VERSION}_${PE_UPGRADE_VERSION}
 
 trap cleanup SIGINT SIGTERM
 
+echo "Installing the relevant gems ..."
+bundle install
+
 echo "Exporting the relevant environment variables ..."
 export BEAKER_KEYFILE=~/.ssh/id_rsa-acceptance
 export BEAKER_HELPER=lib/beaker_helper.rb
 export BEAKER_PRESUITE=setup/install.rb,setup/agent_upgrade.rb
 export BEAKER_TESTSUITE=acceptance/tests
 export BEAKER_PRECLEANUP=acceptance/post
+export ABS_RESOURCE_HOSTS=`get-abs-resources "${host_layout}"`
 export pe_version="$PE_VERSION"
 export pe_upgrade_version="$PE_UPGRADE_VERSION"
 
 echoln "Generating the results directory and the hosts.cfg file ..."
 mkdir -p $results_dir
-hosts_cfg_content=`bundle exec beaker-hostgenerator "$host_layout" --global-config forge_host=forge-aio01-petest.puppetlabs.com`
+hosts_cfg_content=`bundle exec beaker-hostgenerator "$host_layout" --hypervisor abs` #--global-config forge_host=forge-aio01-petest.puppetlabs.com`
 
 if [[ $? -ne 0 ]]; then
   echoln "Failed to generate the hosts.cfg file. Clearing the results directory and exiting the script ..."
@@ -67,33 +68,14 @@ for i in `seq $n`; do
 
   echoln "Executing the agent upgrade ..."
   
-  # Run the test command in the background. In the foreground, we poll for the
-  # existence of the pre_suite-summary.txt file. When that file exists, then
-  # our pre-suite/agent-upgrade has finished running. Thus, there is no need to
-  # proceed further with the rest of the acceptance tests so we kill the background
-  # process. 
-  bundle exec beaker --hosts $hosts_cfg --type pe --keyfile $BEAKER_KEYFILE --tests $BEAKER_TESTSUITE --preserve-hosts onfail --helper $BEAKER_HELPER --pre-cleanup $BEAKER_PRECLEANUP --pre-suite $BEAKER_PRESUITE --log-prefix $log_prefix > /dev/null 2>&1 &
+  bundle exec beaker --hosts $hosts_cfg --type pe --keyfile $BEAKER_KEYFILE --tests $BEAKER_TESTSUITE --preserve-hosts onfail --helper $BEAKER_HELPER --pre-cleanup $BEAKER_PRECLEANUP --pre-suite $BEAKER_PRESUITE --log-prefix $log_prefix --log-level verbose
 
   # Get the directory containing all the log files (since logs are dated, we have to poll for
   # the creation of the log directory)
   log_dir="log/${log_prefix}"
-  while [[ ! -d $log_dir ||  -z `ls $log_dir` ]]; do
-    :
-  done
   log_dir="${log_dir}/`ls $log_dir`"
-
-  echo "Waiting for the creation of the pre_suite-summary.txt file ..."
   summary="${log_dir}/pre_suite-summary.txt"
-  while [[ ! -a "$summary" ]]; do
-    sleep 1
-  done
-  
-  # Sleep a brief second so that beaker has time to finish writing
-  # to this file, and then kill the background process
-  echo "Killing the background agent upgrade process ..."
-  sleep 1
-  kill $(jobs -p)
-  
+
   has_tests_that() {
     local category="$1"
     local occurrences=`sed -E -n "s/$category: ([0-9]|[1-9][0-9]+)/\1/p" "$summary"  | sed 's/[[:blank:]]//g'`
