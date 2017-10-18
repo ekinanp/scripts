@@ -38,11 +38,13 @@ resources_json=`${BEAKER_HOSTGENERATOR} ${host_layout} --hypervisor abs --templa
 abs_resources="["
 unset add_comma
 for template in `echo "${resources_json}" | jq -r 'keys | .[]'`; do
-  if [[ -n "${add_comma}" ]]; then
-    abs_resources="${abs_resources},"
-  fi
-  abs_resources="${abs_resources}`make_host_json ${template}`"
-  add_comma=true
+  for i in $(seq $(echo "${resources_json}" | jq -r ".\"${template}\"")); do
+    if [[ -n "${add_comma}" ]]; then
+      abs_resources="${abs_resources},"
+    fi
+    abs_resources="${abs_resources}`make_host_json ${template}`"
+    add_comma=true
+  done
 done
 abs_resources="${abs_resources}]"
 

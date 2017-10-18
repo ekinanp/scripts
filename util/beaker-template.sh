@@ -34,5 +34,6 @@ echo "Running beaker ... "
 
 run_beaker "${results_dir}" "${hosts_cfg}"
 
+echo ""
 echo "Finished running beaker. Copying the contents of the log directory to the results directory ..."
 cp -r "${log_dir}/." "${results_dir}"
