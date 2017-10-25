@@ -11,6 +11,11 @@ if [[ -z "${component}" ]]; then
   exit 1
 fi
 
+json_path="configs/components/${component}.json"
+pushd "${PROJECT_DIR}"
+  ref=`jq -r ".ref" ${json_path}`
+popd
+
 pushd "${GITHUB_DIR}"
   sudo rm -rf "${component}"
   url="git@github.com:ekinanp/${component}.git"
@@ -18,13 +23,13 @@ pushd "${GITHUB_DIR}"
   git clone "${url}"
   pushd "${component}"
     git branch -D PA-978
+    git checkout "${ref}"
     git checkout -b PA-978
     git push --set-upstream origin PA-978 --force
   popd
 popd
 
 pushd "${PROJECT_DIR}"
-  json_path="configs/components/${component}.json"
   jq -r ".url |= \"${url}\" | .ref |= \"PA-978\"" ${json_path} > ${json_path}.tmp && mv ${json_path}.tmp ${json_path}
   git add "${json_path}"
   git commit -m "Initialized the ${component} component!"

@@ -3,7 +3,7 @@
 set -e
 
 GITHUB_DIR=/Users/enis.inan/GitHub
-PA978_FILE=${GITHUB_DIR}/ci-job-configs/jenkii/jenkins-master-prod-1/projects/pa978.yaml
+PA978_FILE=${GITHUB_DIR}/ci-job-configs/jenkii/jenkins-master-prod-1/projects/puppet-agent.yaml
 
 component="$1"
 message="$2"
