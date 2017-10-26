@@ -34,9 +34,7 @@ for input in "${TICKETMATCH_INPUTS[@]}"; do
   jira_fix_version=${parsed_input[4]}
   IFS="${old_ifs}"
 
-  if [[ ! -d "${WORKSPACE}/${repo}" ]]; then
-    clone_clean_repo "${WORKSPACE}" "${GITHUB_USER}" "${repo}" "${git_to_rev}"
-  fi
+  lazy_clone_clean_repo "${WORKSPACE}" "${GITHUB_USER}" "${repo}" "${git_to_rev}"
 
   pushd "${WORKSPACE}"
     pushd "${repo}"

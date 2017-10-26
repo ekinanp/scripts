@@ -24,6 +24,24 @@ bump_cpp_project() {
 # these routines do the version bump for each component.
 # before executing them, make sure that you are in that
 # specific component's repo directory
+leatherman() {
+  local version="$1"
+  local change_text=
+  # Add any CHANGELOG updates here.
+  read -r -d '' change_text <<'EOF'
+This is a feature release.
+EOF
+
+  bump_cpp_project leatherman "${version}" "${change_text}"
+}
+
+bump_puppet() {
+  local version="$1"
+
+  fsed "([ ]+ PUPPETVERSION = )'${VERSION_RE}'/\\1'${version}'" lib/puppet/version.rb
+  fsed "([ ]+ version = )\"${VERSION_RE}\"/\\1\"${version}\"" .gemspec
+}
+
 pxp_agent() {
   local version="$1"
   local change_text=
@@ -51,13 +69,14 @@ marionette_collective() {
 
   fsed "([ ]+ VERSION=)\"${VERSION_RE}\"/\\1\"${version}\"" lib/mcollective.rb 
 
-  local date="DATE"
+  local date="2017/10/26"
   local add_changelog_updates=
   # Add the CHANGELOG updates here. Note that every line here should be of the form:
   #   print "<line>"
   # to make it easy to insert into awk below.
   read -r -d '' add_changelog_updates <<EOF
 print "|${date}|Release *${version}*||"
+print "|2017/09/25|Restarting the mcollective service no longer kills running agent subprocesses|MCO-816|"
 EOF
 
   # Update the website/changelog.md
@@ -67,7 +86,7 @@ EOF
   #
   # TODO: Could calculate previous_version instead of
   # hardcode it. Maybe add this feature later.
-  local previous_version="PREVIOUS VERSION"
+  local previous_version="2.11.3"
   local add_release_notes_updates=
   read -r -d '' add_release_notes_updates <<EOF
   print ""
@@ -89,8 +108,13 @@ EOF
 puppet() {
   local version="$1"
 
-  fsed "([ ]+ PUPPETVERSION = )'${VERSION_RE}'/\\1'${version}'" lib/puppet/version.rb
-  fsed "([ ]+ version = )\"${VERSION_RE}\"/\\1\"${version}\"" .gemspec
+  bump_puppet "${version}"
+}
+
+puppet_cve_test() {
+  local version="$1"
+
+  bump_puppet "${version}"
 }
 
 facter() {
@@ -119,7 +143,7 @@ clone_clean_repo "${WORKSPACE}" "${GITHUB_USER}" "${component}" "${branch}"
 
 pushd "${WORKSPACE}"
   pushd "${component}"
-    underscored_component=${component/-/_}
+    underscored_component=${component//-/_}
     ${underscored_component} ${version}
     git add -u
     msg="(${jira_ticket}) Prepare for ${version} release"

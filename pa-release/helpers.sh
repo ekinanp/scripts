@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 
 # utility routines
+fjq() {
+  local action="$1"
+  local file="$2"
+
+  jq -r "${action}" "${file}" > "${file}.tmp" && mv "${file}.tmp" "${file}"
+}
+
 fsed() {
   local action="$1"
   local file="$2"
@@ -55,6 +62,21 @@ validate_arg() {
   fi
 }
 
+clone_repo() {
+  local workspace="$1"
+  local fork_user="$2"
+  local repo="$3"
+  local checkout="$4"
+
+  pushd "${workspace}"
+    rm -rf "${repo}"
+    git clone `repo_url ${fork_user} ${repo}` "${repo}"
+    pushd "${repo}"
+      ${checkout}
+    popd
+  popd
+}
+
 clone_clean_repo() {
   local workspace="$1"
   local fork_user="$2"
@@ -68,7 +90,35 @@ clone_clean_repo() {
       git remote add upstream `repo_url puppetlabs ${repo}`
       git fetch upstream
       git checkout -b "${branch}" "upstream/${branch}" 
-      git push --set-upstream origin "${branch}" --force 
+      git push --set-upstream origin "${branch}" --force
+    popd
+  popd
+}
+
+lazy_clone_clean_repo() {
+  local workspace="$1"
+  local fork_user="$2"
+  local repo="$3"
+  local branch="$4"
+
+  if [[ ! -d "${WORKSPACE}/${repo}" ]]; then
+    clone_clean_repo "${WORKSPACE}" "${fork_user}" "${repo}" "${branch}"
+  fi
+}
+
+checkout_repo() {
+  local workspace="$1"
+  local fork_user="$2"
+  local repo="$3"
+  local ref="$4"
+
+  pushd "${workspace}"
+    if [[ ! -d "${repo}" ]]; then
+       git clone `repo_url ${fork_user} ${repo}` "${repo}"
+    fi
+    pushd "${repo}"
+      git fetch
+      git checkout "${ref}"
     popd
   popd
 }
