@@ -1,59 +1,7 @@
 #!/usr/bin/env bash
 
-# utility routines
-fsed() {
-  local action="$1"
-  local file="$2"
-
-  sed -E "s/${action}/" "${file}" > "${file}.tmp" && mv "${file}.tmp" "${file}"
-}
-
-fawk() {
-  local code="$1"
-  local file="$2"
-  
-  awk "${code}" "${file}" > "${file}.tmp" && mv "${file}.tmp" "${file}"
-}
-
-# read as "fawk" after first match
-fawk_afm() {
-  local regex="$1"
-  local code="$2"
-  local file="$3"
-
-  # Code skeleton obtained from:
-  #   https://stackoverflow.com/questions/32007152/insert-multiple-lines-of-text-before-specific-line-using-sed
-  #
-  # TODO: Refactor this to be more "awky"
-  fawk "
-    BEGIN {
-      matched=0
-    }
-    { print }
-    /${regex}/ {
-      if ( matched == 0 ) {
-        ${code}
-        matched=1
-      }
-    }
-  " "${file}"
-}
-
-component_url() {
-  local github_user="$1"
-  local component="$2"
-
-  echo "git@github.com:${github_user}/${component}.git"
-}
-
-validate_arg() {
-  local arg="$1"
-
-  if [[ -z "${arg}" ]]; then
-    echo "USAGE: ./bump-component.sh <component> <branch> <version> <jira-ticket>"
-    exit 1
-  fi
-}
+HELPERS=/Users/enis.inan/scripts/pa-release/helpers.sh
+source "${HELPERS}"
 
 VERSION_RE="[0-9]+\.[0-9]+\.[0-9]+"
 
@@ -155,7 +103,7 @@ facter() {
 # TODO: Once the script is ready, and all version updates have been tested, uncomment
 # the below parts, as this contains the core functionality
 GITHUB_USER="ekinanp"
-WORKSPACE=/Users/enis.inan/GitHub/scripts/pa-release/testing
+WORKSPACE=/Users/enis.inan/GitHub/scripts/pa-release/bumping-ws
 
 component="$1"
 branch="$2"
@@ -167,17 +115,10 @@ validate_arg "${branch}"
 validate_arg "${version}"
 validate_arg "${jira_ticket}"
 
+clone_clean_repo "${WORKSPACE}" "${GITHUB_USER}" "${component}" "${branch}"
 
 pushd "${WORKSPACE}"
-  # start from a blank slate
-  rm -rf "${component}"
-  git clone `component_url ${GITHUB_USER} ${component}` "${component}"
   pushd "${component}"
-    git remote add upstream `component_url puppetlabs ${component}`
-    git fetch upstream
-    git checkout -b "${branch}" "upstream/${branch}" 
-    git push --set-upstream origin "${branch}" --force 
-   
     underscored_component=${component/-/_}
     ${underscored_component} ${version}
     git add -u
@@ -185,8 +126,6 @@ pushd "${WORKSPACE}"
     git commit -m "${msg}"
     git push
 
-    # TODO: Change this to puppetlabs:${branch} once the feature
-    # has been thoroughly tested
-    hub pull-request -b ekinanp:master -m "${msg}"
+    hub pull-request -b "ekinanp:master" -m "${msg}"
   popd
 popd
