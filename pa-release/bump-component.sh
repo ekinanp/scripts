@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-HELPERS=/Users/enis.inan/scripts/pa-release/helpers.sh
+HELPERS=/Users/enis.inan/GitHub/scripts/pa-release/helpers.sh
 source "${HELPERS}"
 
 VERSION_RE="[0-9]+\.[0-9]+\.[0-9]+"
@@ -126,6 +126,6 @@ pushd "${WORKSPACE}"
     git commit -m "${msg}"
     git push
 
-    hub pull-request -b "ekinanp:master" -m "${msg}"
+    hub pull-request -b "puppetlabs:${branch}" -m "${msg}"
   popd
 popd
