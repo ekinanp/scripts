@@ -1,38 +1,23 @@
 #!/usr/bin/env bash
 
+SCRIPTS_ROOT=/Users/enis.inan/GitHub/scripts
+TICKET_NUMBER="PA-1697"
+source "${SCRIPTS_ROOT}/${TICKET_NUMBER}/helpers.sh"
+
 set -e
 
-GITHUB_DIR=/Users/enis.inan/GitHub/scripts/PA-978/workspace
-PA978_FILE=/Users/enis.inan/GitHub/ci-job-configs/jenkii/jenkins-master-prod-1/projects/puppet-agent.yaml
-PA_BRANCH="PA-978"
-
+USAGE="./update-component.sh <component>"
 component="$1"
 
-if [[ -z "${component}" ]]; then
-  echo "USAGE: ./update-component.sh <component>"
-  exit 1
-fi
+validate_arg "${USAGE}" "${component}"
 
-underscored_component=${component/-/_}
-num=`jq ."${underscored_component}" components.json`
-pushd "${GITHUB_DIR}"
-  pushd "${component}"
-    sha=`/Users/enis.inan/GitHub/scripts/PA-978/add-feature.sh "${num}" | tail -1`
-  popd
-  pushd "puppet-agent"
-    git pull
-    component_json="configs/components/${component}.json"
-    jq --compact-output ".ref |= \"${sha}\"" "${component_json}" > "${component_json}.tmp" && mv "${component_json}.tmp" "${component_json}"
-    git add -u
-    git commit -m "Updating ${component}'s sha with the sha to tag with!"
-    git push
-  popd
-popd
-tag=978."${num}"
+next_update_json=`next_update_json "${component}"`
+num=`echo "${next_update_json}" | jq -r '.num'`
+new_tag=`echo "${next_update_json}" | jq -r '.tag'`
 
-jq -r ".${underscored_component} |= $((num+1))" components.json > components.json.tmp && mv components.json.tmp components.json
+sha=`update_repo "${component}" "${num}" "${new_tag}" | tail -1`
+update_component_ref "${component}" "${sha}"
 
 component_re="${component}:([^ ]+)"
-substitution="${component}:${tag}"
-
-sed -E "s/${component_re}/${substitution}/" ${PA978_FILE} > ${PA978_FILE}.tmp && mv ${PA978_FILE}.tmp ${PA978_FILE}
+substitution="${component}:${new_tag}"
+fsed "${component_re}/${substitution}" "${PUPPET_AGENT_YAML}" 
