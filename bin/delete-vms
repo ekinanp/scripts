@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-next_vm() {
-  local vms="$1"
-  
-  echo "${vms}" | sed -n -E "s/([^,]+),(.+)/\\1 \\2/p"
-}
-
 delete_vm() {
   local host_name="$1"
 
@@ -15,37 +9,27 @@ delete_vm() {
       cmd="${cmd} --service ns"
     fi
 
-    ${cmd}
+    result=`${cmd} 2>&1`
 
-    if [[ "$?" -eq 0]]; then
-      break
+    if [[ ! ${result} =~ "Something went wrong" ]]; then
+      echo "${result}"
+      return 0
     fi
   done
+
+  echo "Something went wrong while deleting ${host_name}."
+  return 1
 }
 
 SCRIPTS_ROOT="/Users/enis.inan/GitHub/scripts"
 source "${SCRIPTS_ROOT}/util/helpers.sh"
 
-USAGE="delete-vms <vms>"
+USAGE="delete-vms <vm1> <vm2> ... <vmN>"
 
-vms="$1"
+vms="$@"
 
 validate_arg "${USAGE}" "${vms}"
 
-sed -E ""
-
-action="$1"
-
-if [[ ! "${action}" ]]; then
-  action="templates"
-fi
-
-for valid_action in active puppet templates; do
-  if [[ "${action}" =~ "${valid_action}" ]]; then
-    list_vms_${action}
-    exit 0
-  fi
+for vm in ${vms}; do
+  delete_vm "${vm}"
 done
-
-echo "USAGE: ${USAGE}" 
-exit 1

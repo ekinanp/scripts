@@ -18,7 +18,7 @@ popd
 
 pushd "${GITHUB_DIR}"
   sudo rm -rf "${component}"
-  url="git@github.com:puppetlabs/${component}.git"
+  url="git@github.com:ekinanp/${component}.git"
 
   git clone "${url}"
   pushd "${component}"

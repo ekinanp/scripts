@@ -18,13 +18,13 @@ host=`floaty get "${TEST_PLATFORM}" | jq -r ".\"${TEST_PLATFORM}\""`
 
 if [[ "${component}" == "mcollective" ]]; then
   gem_file="mcollective-client-${version}.gem"
-  cmd="/usr/local/share/gems/gems/mcollective-client-2.11.3/bin/mco"
+  cmd="/usr/local/share/gems/gems/mcollective-client-${version}/bin/mco"
 else
   gem_file="${component}-${version}.gem"
   cmd="${component}"
 fi
 
-ssh -t -oStrictHostKeyChecking=no root@${host} "curl -O http://builds.delivery.puppetlabs.net/${component}/${version}/shipped/${gem_file}"
+ssh -t -oStrictHostKeyChecking=no root@${host} "curl -O http://builds.delivery.puppetlabs.net/${component}/${version}/artifacts/${gem_file}"
 ssh -t -oStrictHostKeyChecking=no root@${host} "gem install ${gem_file}"
 displayed_version=`ssh -t -oStrictHostKeyChecking=no root@${host} "${cmd} --version" | tail -1`
 
