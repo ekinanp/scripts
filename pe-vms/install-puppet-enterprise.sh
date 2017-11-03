@@ -10,7 +10,7 @@ if [[ -z "$vm_host" ]]; then
   exit 1
 fi
 
-PUPPET_INST_DIR=puppet-enterprise-2017.3.0-rc9-39-g5f648df-el-7-x86_64
+PUPPET_INST_DIR=puppet-enterprise-2017.3.2-rc1-90-g2708247-el-7-x86_64
 PUPPET_TAR=${PUPPET_INST_DIR}.tar
 
 ssh-add &> /dev/null

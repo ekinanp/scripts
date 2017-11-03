@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+SCRIPTS_ROOT="/Users/enis.inan/GitHub/scripts"
+source "${SCRIPTS_ROOT}/util/helpers.sh"
+
+USAGE="get-vm <template>"
+
+template="$1"
+
+validate_arg "${USAGE}" "${template}"
+
+host_json=`make_host_json "${template}"`
+if [[ "$?" -ne 0 ]]; then
+  echo ""
+  echo "ERROR: Could not get a VM for the template ${template}!"
+  exit 1
+fi
+
+echo "${host_json}" | jq -r ".hostname"

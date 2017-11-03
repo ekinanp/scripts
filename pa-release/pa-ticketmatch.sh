@@ -6,7 +6,6 @@ source "${HELPERS}"
 RUN_TICKETMATCH=/Users/enis.inan/GitHub/scripts/pa-release/run-ticketmatch.sh
 WORKSPACE=/Users/enis.inan/GitHub/scripts/pa-release/ticketmatch-ws
 RESULTS_DIR=/Users/enis.inan/GitHub/scripts/pa-release/ticketmatch-results
-GITHUB_USER="ekinanp"
 
 # each element is interpreted as:
 #   <repo>:<git-from-rev>:<git-to-rev>:<jira-project>:'<jira-fix-version>'

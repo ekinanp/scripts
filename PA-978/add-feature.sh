@@ -3,7 +3,7 @@
 num="$1"
 feature="feature${num}"
 
-echo "${num}" > "${feature}"
+echo "978.${num}" > "${feature}"
 git add "${feature}"
 git commit -m "Added feature ${num}"
 git push

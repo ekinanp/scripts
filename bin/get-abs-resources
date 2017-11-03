@@ -1,37 +1,15 @@
 #!/usr/bin/env bash
 
-VMFLOATY=/Users/enis.inan/GitHub/vmfloaty/bin/floaty
+SCRIPTS_ROOT="/Users/enis.inan/GitHub/scripts"
+source "${SCRIPTS_ROOT}/util/helpers.sh"
+
 BEAKER_HOSTGENERATOR=beaker-hostgenerator
 
-USAGE="./get-abs-resources.sh <host-layout>"
-
-make_host_json() {
-  local host_type="$1"
-
-  for host_engine in "vmpooler" "nspooler"; do
-    if [[ "${host_engine}" == "vmpooler" ]]; then
-      host_name=`${VMFLOATY} get "${host_type}" | jq -r ".\"${host_type}\""`
-    else
-      host_name=`${VMFLOATY} get "${host_type}" --service ns | jq -r ".\"${host_type}\".hostname"`
-    fi
-
-    if [[ -z "${host_name}" ]]; then
-      continue
-    fi
-
-    echo "{\"hostname\":\"${host_name}\",\"type\":\"${host_type}\",\"engine\":\"${host_engine}\"}"
-    return 0
-  done
-
-  return 1
-}
+USAGE="get-abs-resources <host-layout>"
 
 host_layout="$1"
 
-if [[ -z "$host_layout" ]]; then
-  echo "$USAGE"
-  exit 1
-fi
+validate_arg "${USAGE}" "${host_layout}"
 
 resources_json=`${BEAKER_HOSTGENERATOR} ${host_layout} --hypervisor abs --templates-only --disable-default-role`
 

@@ -126,18 +126,18 @@ facter() {
 
 # TODO: Once the script is ready, and all version updates have been tested, uncomment
 # the below parts, as this contains the core functionality
-GITHUB_USER="ekinanp"
 WORKSPACE=/Users/enis.inan/GitHub/scripts/pa-release/bumping-ws
+USAGE="./bump-component.sh <component> <branch> <version> <jira_ticket>"
 
 component="$1"
 branch="$2"
 version="$3"
 jira_ticket="$4"
 
-validate_arg "${component}"
-validate_arg "${branch}"
-validate_arg "${version}"
-validate_arg "${jira_ticket}"
+validate_arg "${USAGE}" "${component}"
+validate_arg "${USAGE}" "${branch}"
+validate_arg "${USAGE}" "${version}"
+validate_arg "${USAGE}" "${jira_ticket}"
 
 clone_clean_repo "${WORKSPACE}" "${GITHUB_USER}" "${component}" "${branch}"
 

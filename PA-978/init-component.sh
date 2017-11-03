@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-GITHUB_DIR=/Users/enis.inan/GitHub
+GITHUB_DIR=/Users/enis.inan/GitHub/scripts/PA-978/workspace
 PROJECT_DIR="${GITHUB_DIR}/puppet-agent"
 PA978_DIR=/Users/enis.inan/GitHub/scripts/PA-978
 
@@ -18,7 +18,7 @@ popd
 
 pushd "${GITHUB_DIR}"
   sudo rm -rf "${component}"
-  url="git@github.com:ekinanp/${component}.git"
+  url="git@github.com:puppetlabs/${component}.git"
 
   git clone "${url}"
   pushd "${component}"

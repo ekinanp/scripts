@@ -1,8 +1,8 @@
 {
-  "leatherman": 2,
-  "facter": 2,
-  "pxp_agent": 2,
-  "puppet": 2,
-  "hiera": 2,
-  "marionette_collective": 2
+  "leatherman": 10,
+  "facter": 6,
+  "pxp_agent": 6,
+  "puppet": 6,
+  "hiera": 6,
+  "marionette_collective": 6
 }

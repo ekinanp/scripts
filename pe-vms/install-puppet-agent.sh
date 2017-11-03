@@ -11,6 +11,6 @@ if [[ -z "$master_vm" ]]; then
 fi
 
 for vm in "$@"; do
-  ssh -t -oStrictHostKeyChecking=no root@$vm "wget -O - -q --no-check-certificate --secure-protocol=TLSv1 https://${master_vm}:8140/packages/current/install.bash | sudo bash"
+  ssh -t -oStrictHostKeyChecking=no root@$vm "curl -k https://${master_vm}:8140/packages/current/install.bash | sudo bash"
   ssh -oStrictHostKeyChecking=no root@$master_vm "puppet cert sign ${vm}" 
 done

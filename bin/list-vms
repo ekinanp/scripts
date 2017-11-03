@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+list_vms_active() {
+  local ACTIVE_VM_RE="-[ ]+.+"
+  local output=`query_vmfloaty "list --active"`
+  local active_vms=`echo "${output}" | sed -n -E "s/(${ACTIVE_VM_RE})/\\1/gp"`
+
+  if [[ -z "${active_vms}" ]]; then
+    echo "You have no running VMs."
+  else
+    echo "Running VMs:"
+    echo "${active_vms}"
+  fi
+}
+
+list_vms_puppet() {
+  echo "\`list-vms puppet\` is not yet implemented!"
+}
+
+list_vms_templates() {
+  query_vmfloaty "list" | sort
+}
+
+SCRIPTS_ROOT="/Users/enis.inan/GitHub/scripts"
+source "${SCRIPTS_ROOT}/util/helpers.sh"
+
+USAGE="list-vms [active | puppet | templates]"
+
+action="$1"
+
+if [[ ! "${action}" ]]; then
+  action="templates"
+fi
+
+for valid_action in active puppet templates; do
+  if [[ "${action}" =~ "${valid_action}" ]]; then
+    list_vms_${action}
+    exit 0
+  fi
+done
+
+echo "USAGE: ${USAGE}" 
+exit 1

@@ -1,0 +1,111 @@
+spawn ruby /Users/enis.inan/GitHub/ticketmatch/ticketmatch.rb
+Enter Git From Rev: 5.3.2
+Enter Git To Rev: |master| 5.3.x
+Enter JIRA project: |PUP| PA
+Enter JIRA fix version: |PA 5.3.x| puppet-agent 5.3.3
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0100  5299  100  5188  100   111   5188    111  0:00:01  0:00:01 --:--:--  2921
+** MAINT
+    a62b0b78  Add package mirror for dmidecode
+    d94d81ab  Fix openssl component configuration
+    05d967eb  Remove pl-autoconf for AIX machines
+-- PA-1319 (Resolved)
+    49fc86a1  Add tests that validate the vendored ruby
+** PA-1487
+    a6706f88  Update broken ruby/curl builds
+ R  5f1d7a2c  Revert "(PA-1487) Update broken ruby/curl builds"
+    3e5bdf01  Update configuration of C components to include compiler
+-- PA-1503 (Resolved)
+    bb0c5c77  Update curl to v7.56.1
+    a3feb60f  Update to latest curl
+-- PA-1547 (Resolved)
+    89fe6821  Update Ruby 2.4.1 to 2.4.2
+    890ad9ac  Update Ruby 2.3.3 to 2.3.5
+    84fcb7cb  Update Ruby 2.3.1 to 2.3.5
+ R  3a74170d  Revert "(PA-1547) Update Ruby 2.3.1 to 2.3.5"
+    0e20d7bd  Apply patches for fixed 2.4.2 vulnerabilities to 2.1.9
+-- PA-1568 (Resolved)
+    86de52c6  Use stomp v1.4.4 to drop patch, fix Ruby warning
+-- PA-1569 (Resolved)
+    e511f31b  Bump win32-process gem to 0.7.5
+ R  5db7f292  Revert "(PA-1569) Bump win32-process gem to 0.7.5"
+ R  37843847  Revert "Revert "(PA-1569) Bump win32-process gem to 0.7.5""
+-- PA-1624 (Resolved)
+    83a86614  Update dmidecode to to 3.1 for el-7-aarch64
+** PA-1625
+    77a62431  Enable el-7-aarch64 in nightlies
+    cab0aabb  Add ruby 2.4.2 rbconfig for aarch64-redhat-linux
+    cc76a980  Enable el-7-aarch64 platform
+-- PA-1631 (Resolved)
+    01a7969d  Restore PATH when building curl
+-- PA-1638 (Resolved)
+    cdf406a1  Use sqlite3 version 1.3.11 for RHEL 5 platforms
+** REVERT
+    86a73306  Revert "Merge pull request #1184 from McdonaldSeanp/1487PA"
+** UNMARKED
+    5738db31  bumping puppet to c21a696bf93510b3cc3bc6c4de453103aa604fa8
+    1c8689d5  bumping puppet to 4189fb4e1279f6ca7e64a953b0d830283e1ea4f7
+    199b9430  bumping puppet to 035eee52fc3b018c126be20410f252b9432b6bbe
+    0fe1a198  bumping puppet to e486f99ac18364ce5e927daa5918c40fde4ad373
+    ac88f941  bumping puppet to da9392c883233482ce13ca9b249c9c9b81cc5a94
+    88f388d6  bumping puppet to 6c64bebe49a6c6b5a4c6eb5c7bf1ef8bb3d2137a
+    011db807  bumping puppet to b94280083c226d73588e6a3ae1752ee37e526f6b
+    394ebe88  bumping puppet to b1461040f9da211ae2dea7049cfb0725854ce595
+    92ab84c1  bumping puppet to 9cf816f49fb3fbd9342aab5b93f6a43e7fa93ea8
+    cf566235  bumping puppet to 9940019b5454847fda0a868cdea2e2b8d6c591f7
+    51baa7ee  bumping puppet to 9940019b5454847fda0a868cdea2e2b8d6c591f7
+    baa385ce  bumping facter to a73772b0fd33fa8d24d389aff074b00034dd318d
+    7393c9d2  bumping pxp-agent to bc09cbeb9cac1d62a8416e2e7882c038427e139f
+    b0e65fb6  bumping pxp-agent to 44a3c32e549982dd75738430fb9d382d6245f0b8
+    c6ce7ffc  bumping puppet to b4038629e300ab73147b5a62ea9ed1f0b9c45107
+    a56d2f97  bumping facter to 244f034185897482535fb07f3f1fd911e71c410e
+    0e4ae532  bumping puppet to 1d35d0620fc53e67a18ab99c03b143794ee3557f
+    ec411136  bumping puppet to 74ff444293ac19d6150e5d694e8610b60d5c4343
+    c2c594a2  bumping puppet to 3eff4193ed5620ae88feaf5850f1d94f625225c4
+    d0384c5c  bumping puppet to 18d167598286db397dfe5e418051fb1f019dc79a
+    45d48a55  bumping facter to 0bfb0585cb785e0cfcdac79b274eae82d2208a59
+    8661ef98  bumping leatherman to f005d55ef45fa354c05cf2566113e30e342bf69e
+    6328a37f  bumping facter to 8234732528e5452593f146e2395ebf3279507752
+    d7a8949e  bumping puppet to e95383c412a771557c669f98b28596f1da931e54
+    f2868c27  bumping puppet to 7478eee9077fd503c623f388092fcb9cb4719a92
+    8b59b886  bumping facter to 4f136bc274f46052fbf10030dee207386a12e8e0
+    f1b0b479  bumping puppet to b1fa1dd4ab656979b9083ab04f58153ac13a7f45
+    70530a0e  bumping marionette-collective to fc3b4facdba2cc93d54a0c44ef40b407dae93a60
+    f0c2d4d1  bumping puppet to 67eb2f09ecaedc536d1a0c0e794da8f9f6ab8b1d
+    f65f9efb  bumping puppet to 1b6a5aab43c6b4a3b60c8f5a0f4236bc6161b48a
+    d11541c6  bumping puppet to 6be7b3af0b7d520b23677be3411bacd5f5ea7984
+    5a5f68d2  bumping puppet to 895d6733c9ad26b05746a2e09cf78a004e70c533
+    d9292997  bumping facter to 71db52abff25871c7b1fc5c0c364996a8f507cce
+    f858e457  bumping cpp-pcp-client to 638a3eb7d6397b1abe6d992f21fc3dcb2ac7dcc0
+    1ddc81f8  bumping cpp-pcp-client to 638a3eb7d6397b1abe6d992f21fc3dcb2ac7dcc0
+    dc885414  bumping puppet to d23ff65ebe872aa8df6de547dff3d6896d12feca
+    a2d26fe8  bumping puppet to 6622dbb6a27e268fb4126da92eb2642156584bc5
+    863b31a6  bumping puppet to c57ee8cecb1085a72949af874d51bebc6c94b28a
+    b267c9c5  bumping facter to d56428f883fd07f1a46145651a6be8160207810d
+    eddc58d0  bumping puppet to b8a90890e3dc3aed020c19bea94c6527ab56da3c
+    1aec3ea9  bumping puppet to d21c5a749a87cf4e4308880e5daf331ccf8fd49e
+    445a9718  bumping puppet to fac92d9ae2e1ffde8c8fb274767de53f374da47f
+    c6f9e9db  bumping facter to 09e7cfe3cd3e0ed5d4e6562651adb83a7455e2ff
+    be13d1db  bumping facter to d5af4cf9c28a5e8f52742bdf7e6a247885251c46
+    94f28554  bumping pxp-agent to 84fa972f2328f5c7606b3d8a4523f29d1c21292f
+    1a014723  bumping marionette-collective to 8cd2a8474d06b3c8e79b7f706f3501a7e991e023
+    03f01c29  bumping puppet to daf725470fa6532e75b5def92e58fa2ecc19eedc
+    1b573328  bumping puppet to 0eb4e5f34694c66210c2bb5a42328e65efc49e6a
+    9c7302f5  bumping marionette-collective to 4a8fe9e3db6e3cbf27be73bc3f5f19f606447564
+
+----- Git commits in Jira -----
+[31mCOMMIT TOKENS NOT FOUND IN JIRA (OR NOT WITH FIX VERSION OF puppet-agent 5.3.3)[0m
+[31mPA-1487[0m
+[31mPA-1625[0m
+[31mREVERT 37843847[0m
+[31mREVERT 5db7f292[0m
+[31mREVERT 5f1d7a2c[0m
+[31mREVERT 86a73306[0m
+[31mREVERT 3a74170d[0m
+
+----- Unresolved Jira tickets not in git commits -----
+[32mALL ISSUES WERE FOUND IN GIT[0m
+
+----- Unresolved Jira tickets found in git commits -----
+[32mALL ISSUES WERE RESOLVED IN JIRA[0m

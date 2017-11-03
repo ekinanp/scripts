@@ -1,0 +1,27 @@
+spawn ruby /Users/enis.inan/GitHub/ticketmatch/ticketmatch.rb
+Enter Git From Rev: 2.11.3
+Enter Git To Rev: |master| 2.11.x
+Enter JIRA project: |PUP| MCO
+Enter JIRA fix version: |MCO 2.11.x| MCO 2.11.4
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100  1458  100  1354  100   104   1354    104  0:00:01 --:--:--  0:00:01  5673
+** MAINT
+    ce7b311  Use https for builds and nightlies
+    4e0a5d4  Update beaker and install method
+-- MCO-816 (Resolved)
+    0126b28  Allow upgrading puppet-agent with mcollective
+** REVERT
+    6cddbdf  Revert "(maint) Update beaker and install method"
+    d3abfca  Revert "(maint) Use https for builds and nightlies"
+
+----- Git commits in Jira -----
+[31mCOMMIT TOKENS NOT FOUND IN JIRA (OR NOT WITH FIX VERSION OF MCO 2.11.4)[0m
+[31mREVERT 6cddbdf[0m
+[31mREVERT d3abfca[0m
+
+----- Unresolved Jira tickets not in git commits -----
+[32mALL ISSUES WERE FOUND IN GIT[0m
+
+----- Unresolved Jira tickets found in git commits -----
+[32mALL ISSUES WERE RESOLVED IN JIRA[0m

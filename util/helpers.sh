@@ -124,7 +124,37 @@ checkout_repo() {
   popd
 }
 
-# common constants used across scripts
-RELEASE_BRANCH="5.3.3-release"
-GITHUB_USER="puppetlabs"
-TAGGING_WORKSPACE=/Users/enis.inan/GitHub/scripts/pa-release/tagging-ws
+make_host_json() {
+  local host_type="$1"
+
+  for host_engine in "vmpooler" "nspooler"; do
+    if [[ "${host_engine}" == "vmpooler" ]]; then
+      jq_cmd=".\"${host_type}\""
+      vm=`${VMFLOATY} get "${host_type}" 2>&1`
+    else
+      jq_cmd=".\"${host_type}\".hostname"
+      vm=`${VMFLOATY} get "${host_type}" --service ns 2>&1`
+    fi
+
+    if [[ "$?" -ne 0 ]]; then
+      continue
+    fi
+
+    host_name=`echo "${vm}" | jq -r "${jq_cmd}"`
+    echo "{\"hostname\":\"${host_name}\",\"type\":\"${host_type}\",\"engine\":\"${host_engine}\"}"
+    return 0
+  done
+
+  return 1
+}
+
+query_vmfloaty() {
+  local query="$1"
+  local cmd="${VMFLOATY} ${query}"
+
+  ${cmd} && ${cmd} --service ns
+}
+
+
+# Common constants that may be shared throughout scripts
+VMFLOATY=/Users/enis.inan/GitHub/vmfloaty/bin/floaty

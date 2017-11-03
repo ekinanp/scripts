@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+next_vm() {
+  local vms="$1"
+  
+  echo "${vms}" | sed -n -E "s/([^,]+),(.+)/\\1 \\2/p"
+}
+
+delete_vm() {
+  local host_name="$1"
+
+  for host_engine in vmpooler nspooler; do
+    cmd="floaty delete ${host_name}"
+    if [[ "${host_engine}" == "nspooler" ]]; then
+      cmd="${cmd} --service ns"
+    fi
+
+    ${cmd}
+
+    if [[ "$?" -eq 0]]; then
+      break
+    fi
+  done
+}
+
+SCRIPTS_ROOT="/Users/enis.inan/GitHub/scripts"
+source "${SCRIPTS_ROOT}/util/helpers.sh"
+
+USAGE="delete-vms <vms>"
+
+vms="$1"
+
+validate_arg "${USAGE}" "${vms}"
+
+sed -E ""
+
+action="$1"
+
+if [[ ! "${action}" ]]; then
+  action="templates"
+fi
+
+for valid_action in active puppet templates; do
+  if [[ "${action}" =~ "${valid_action}" ]]; then
+    list_vms_${action}
+    exit 0
+  fi
+done
+
+echo "USAGE: ${USAGE}" 
+exit 1
