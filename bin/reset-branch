@@ -1,0 +1,17 @@
+#!/bin/bash
+
+SCRIPTS_ROOT="/Users/enis.inan/GitHub/scripts"
+source "${SCRIPTS_ROOT}/util/helpers.sh"
+
+DUMMY_BRANCH="blahblahblah"
+USAGE="reset-branch <branch>"
+
+branch="$1"
+
+validate_arg "${USAGE}" "${branch}"
+
+git checkout -b "${DUMMY_BRANCH}"
+git branch -D "${branch}"
+git checkout -b "${branch}" "upstream/${branch}"
+git push --set-upstream origin --force
+git branch -D "${DUMMY_BRANCH}"

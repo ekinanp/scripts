@@ -40,7 +40,10 @@ update_repo() {
   local feature_file="feature_${num}"
 
   pushd "${WORKSPACE}/${repo}"
+    git pull
     echo "${new_tag}" > "${feature_file}"
+#    echo "foo" > "${feature_file}"
+
     git add "${feature_file}"
     git commit -m "Added Feature ${num}"
     git push
@@ -60,6 +63,8 @@ update_component_ref() {
   pushd "${PUPPET_AGENT_DIR}"
     component_json="configs/components/${component}.json"
     fjq ".ref |= \"${new_ref}\"" "${component_json}"
+    # update the url just to be safe
+    fjq ".url |= \"git@github.com:ekinanp/${component}.git\"" "${component_json}"
     git add "${component_json}"
     git commit -m "bumping ${component} to ${new_ref}"
     git push --set-upstream origin "${TICKET_BRANCH}" --force

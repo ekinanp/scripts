@@ -12,7 +12,6 @@ new_tag=`echo "${next_update_json}" | jq -r '.tag'`
 
 update_repo "puppet-agent" "${num}" "${new_tag}"
 
-# TODO: Add puppet_agent.yaml substitution here!
-#component_re="${component}:([^ ]+)"
-#substitution="${component}:${new_tag}"
-#fsed -E "${component_re}/${substitution}" "${PUPPET_AGENT_YAML}" 
+puppet_agent_re="p_vanagon_repo_tag: '[^']*'"
+substitution="p_vanagon_repo_tag: '${new_tag}'"
+fsed "${puppet_agent_re}/${substitution}" "${PUPPET_AGENT_YAML}" 
