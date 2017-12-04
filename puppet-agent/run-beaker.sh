@@ -17,14 +17,14 @@ setup_beaker_environment() {
   local host_layout="$1"
   local results_dir="$2"
 
-  export SHA=693644329675e1a9a243040dbc40633d4a1f8b64
-  export SUITE_VERSION=1.10.8.94.g6936443
+  export SHA=bd30b4eaa76151525a6a9af8c6d9aeee5f0f643f
+  export SUITE_VERSION=5.3.3.106.gbd30b4e
   export BEAKER_HOSTGENERATOR_VERSION="~> 1"
   export BEAKER_HOSTS="${results_dir}/${HOSTS_NAME}"
   export TESTS=tests/validate_vendored_ruby.rb
   export OPTIONS='--test-tag-exclude=server'
   export ABS_RESOURCE_HOSTS=`get-abs-resources "${host_layout}"`
-  export SERVER_VERSION=2.8.0
+  export SERVER_VERSION=latest
 }
 
 # This should take in the host layout and output the contents of the hosts.cfg

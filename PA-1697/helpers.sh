@@ -8,7 +8,7 @@ PUPPET_AGENT_DIR="${WORKSPACE}/puppet-agent"
 PUPPET_AGENT_YAML="/Users/enis.inan/GitHub/ci-job-configs/jenkii/jenkins-master-prod-1/projects/puppet-agent.yaml"
 TICKET_BRANCH="${TICKET_NUMBER}"
 REPOS_JSON="${SCRIPTS_ROOT}/${TICKET_NUMBER}/repos.json"
-TAG_PREFIX="${TICKET_BRANCH}"
+TAG_PREFIX="${TICKET_NUMBER//PA-/}"
 
 reset_repo() {
   local repo="$1"
