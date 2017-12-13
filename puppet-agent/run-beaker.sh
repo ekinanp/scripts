@@ -19,7 +19,7 @@ setup_beaker_environment() {
 
   export SHA=bd30b4eaa76151525a6a9af8c6d9aeee5f0f643f
   export SUITE_VERSION=5.3.3.106.gbd30b4e
-  export BEAKER_HOSTGENERATOR_VERSION="~> 1"
+#  export BEAKER_HOSTGENERATOR_VERSION="~> 1"
   export BEAKER_HOSTS="${results_dir}/${HOSTS_NAME}"
   export TESTS=tests/validate_vendored_ruby.rb
   export OPTIONS='--test-tag-exclude=server'

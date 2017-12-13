@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+rm *virtualbox*
+rm *vagrant*
+rm *ec2*
