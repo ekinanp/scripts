@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+is_common_dir() {
+  local dir="$1"
+  [[ `basename ${dir}` == "common" ]]
+  return "$?"
+}
+
+next_common_dir() {
+  local cur_dir="$1"
+  if is_common_dir ${cur_dir}; then
+    local common_dir=$(dirname $(dirname ${cur_dir}))
+  else
+    local common_dir=$(dirname ${cur_dir})
+  fi
+
+  echo "${common_dir}"
+}
+
+template_file="$1"
+
+if [[ -z "${template_file}" ]]; then
+  echo "USAGE: packer-build <template_file>"
+  echo "Make sure you are in the arch. directory!"
+  exit 1
+fi
+
+echo "Locating the directory containing the template file ..."
+template_dir=`pwd`
+while [[ ! -f "${template_dir}/${template_file}" ]]; do
+  template_dir=`next_common_dir ${template_dir}`
+  if [[ "puppetlabs-packer" =~ `basename ${template_dir}` || ${template_dir} == "/" ]]; then
+    break
+  fi
+  template_dir=${template_dir}/common
+done
+
+if [[ ! -f "${template_dir}/${template_file}" ]]; then
+  echo "ERROR: Template file does not exist in the puppetlabs-packer repo!"
+  exit 1
+fi
+
+echo "Found the template file! It is in the directory ${template_dir}"
+echo "Now searching for any var files along the way ..."
+
+cur_directory=`pwd`
+var_files=""
+while [[ ${cur_directory} != ${template_dir} ]]; do
+  if [[ -f ${cur_directory}/vars.json ]]; then
+    var_files="-var-file=${cur_directory}/vars.json ${var_files}"
+  fi
+  cur_directory=`next_common_dir ${cur_directory}`/common
+done
+
+cmd="packer build ${var_files} ${template_dir}/${template_file}"
+echo "About to build the template. We will be running the command:"
+echo "    ${cmd}" 
+echo ""
+echo ""
+
+${cmd}
