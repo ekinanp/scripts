@@ -3,8 +3,8 @@
 SCRIPT_NAME="./scripts/run-beaker.sh"
 HOSTS_NAME="hosts.cfg"
 
-PE_VERSION=2017.3.0
-PE_UPGRADE_VERSION=2017.3.2-rc1-91-g04812f7
+PE_VERSION=2017.3.2
+PE_UPGRADE_VERSION=2018.1.0-rc8-2-g1d6b244
 
 generate_default_results_dir() {
   local host_layout="$1"
@@ -53,6 +53,9 @@ results_dir="$2"
 [[ -z "${results_dir}" ]] && results_dir=`generate_default_results_dir "${host_layout}"`
 
 echo "Installing the relevant gems ..."
+
+export BUNDLE_PATH=.bundle/gems
+export BUNDLE_BIN=.bundle/bin
 bundle install
 
 echo ""

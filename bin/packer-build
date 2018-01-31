@@ -18,6 +18,8 @@ next_common_dir() {
 }
 
 template_file="$1"
+shift
+rem_opts="$@"
 
 if [[ -z "${template_file}" ]]; then
   echo "USAGE: packer-build <template_file>"
@@ -52,7 +54,7 @@ while [[ ${cur_directory} != ${template_dir} ]]; do
   cur_directory=`next_common_dir ${cur_directory}`/common
 done
 
-cmd="packer build ${var_files} ${template_dir}/${template_file}"
+cmd="packer build ${var_files} ${rem_opts} ${template_dir}/${template_file}"
 echo "About to build the template. We will be running the command:"
 echo "    ${cmd}" 
 echo ""

@@ -8,6 +8,8 @@ results_dir="$2"
 [[ -z "${results_dir}" ]] && results_dir=`generate_default_results_dir "${host_layout}"`
 
 echo "Installing the relevant gems ..."
+BUNDLE_PATH=.bundle/gems
+BUNDLE_BIN=.bundle/bin
 bundle install
 
 echo ""

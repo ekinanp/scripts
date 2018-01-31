@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 TILDE=/Users/enis.inan
-TICKET="PE-22810"
+TICKET="PE-22821"
 REPO_ROOT="${TILDE}/GitHub/pe_acceptance_tests"
 SCRIPTS_ROOT="${REPO_ROOT}/scripts"
 RUN_BEAKER_PATH="${TILDE}/GitHub/scripts/agent-upgrade/run-beaker.sh"

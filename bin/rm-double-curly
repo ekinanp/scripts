@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+USAGE="rm-double-curly <script-path>"
+
+source ~/GitHub/scripts/util/helpers.sh
+
+script_path="$1"
+if [[ -z "${script_path}" ]]; then
+  echo "USAGE: ${USAGE}"
+  exit 1
+fi
+
+fsed "s/{{/{/g" ${script_path}
+fsed "s/}}/}/g" ${script_path}

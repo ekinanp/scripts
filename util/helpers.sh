@@ -12,7 +12,7 @@ fsed() {
   local action="$1"
   local file="$2"
 
-  sed -E "s/${action}/" "${file}" > "${file}.tmp" && mv "${file}.tmp" "${file}"
+  sed -E "${action}" "${file}" > "${file}.tmp" && mv "${file}.tmp" "${file}"
 }
 
 fawk() {

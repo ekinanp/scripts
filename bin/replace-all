@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+USAGE+"replace-all <phrase>"
+
+phrase="$1"
+
+if [[ -z "${phrase}" ]]; then
+  echo "USAGE: ${USAGE}"
+  exit 1
+fi
+
+gsed -i

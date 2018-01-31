@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+USAGE="pa-build <platform> [output_dir]"
+
+platform="$1"
+output_dir="$2"
+
+[[ -z "${platform}" ]] && echo "${USAGE}" && exit 1
+
+log_path="${platform}.out"
+if [[ -n "${output_dir}" ]]; then
+  mkdir -p "${output_dir}"
+  log_path="${output_dir}/${log_path}"
+fi
+
+bundle exec build puppet-agent "${platform}" 2>&1 | tee "${log_path}"
