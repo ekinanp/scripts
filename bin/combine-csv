@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+USAGE="combine-csv <csv1> <csv2>"
+
+csv1="$1"
+csv2="$2"
+
+if [[ -z "${csv1}" || -z "${csv2}" ]]; then
+  echo "${USAGE}"
+  exit 1
+fi
+
+platforms=`cat "${csv1}" | gawk -F "," {'print $1'}`
+for platform in ${platforms}; do
+  csv1_time=`cat "${csv1}" | grep "${platform}" | gawk -F "," {'print $2'}`
+  csv2_time=`cat "${csv2}" | grep "${platform}" | gawk -F "," {'print $2'}`
+  echo "${platform},${csv1_time},${csv2_time}"
+done
