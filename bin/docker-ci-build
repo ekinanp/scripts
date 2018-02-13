@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+function get_latest_tag() {
+  local endpoint="$1"
+
+  response_json=`curl "${endpoint}"`
+  echo "${response_json}" | jq ".tags" | jq -r ".[]" | grep -E "^[0-9]+$" | sort -g | tail -n 1
+}
+
+USAGE="docker-ci-build <image-name>"
+
+image_name="$1"
+
+if [[ -z "${image_name}" ]]; then
+  echo "USAGE: ${USAGE}"
+  exit 1
+fi
+
+latest_builder_image_tag=`get_latest_tag "https://cinext-registry.delivery.puppetlabs.net/v2/debian/jessie/jenkins/imagebuild/tags/list"`
+latest_universal_image_tag=`get_latest_tag "https://cinext-registry.delivery.puppetlabs.net/v2/debian/jessie/jenkins/universal/tags/list"`
+
+builder_image="cinext-registry.delivery.puppetlabs.net/debian/jessie/jenkins/imagebuild:${latest_builder_image_tag}"
+universal_image="cinext-registry.delivery.puppetlabs.net/debian/jessie/jenkins/universal:${latest_universal_image_tag}"
+
+docker pull "${builder_image}"
+docker pull "${universal_image}"
+
+cur_workdir=`pwd`
+
+docker run -v /var/run/docker.sock:/var/run/docker.sock \
+  -v `pwd`":/${cur_workdir}" \
+  -w "/${cur_workdir}" \
+  -ti "${builder_image}" \
+  /opt/puppetlabs/bin/puppet docker build \
+  --from "${universal_image}" \
+  --os debian \
+  --os-version jessie \
+  --image-name "${image_name}"

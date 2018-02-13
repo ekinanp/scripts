@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+USAGE="van-build <project> <platform> [output-dir] [rem_args]"
+
+project="$1"
+platform="$2"
+output_dir="$3"
+shift
+shift
+shift
+rem_args="$@"
+
+[[ -z "${project}" ]] && echo "${USAGE}" && exit 1
+[[ -z "${platform}" ]] && echo "${USAGE}" && exit 1
+
+log_path="${project}-${platform}.out"
+if [[ -n "${output_dir}" ]]; then
+  mkdir -p "${output_dir}"
+  log_path="${output_dir}/${log_path}"
+fi
+
+bundle exec build --preserve "${project}" "${platform}" ${rem_args} 2>&1 | tee "${log_path}"
