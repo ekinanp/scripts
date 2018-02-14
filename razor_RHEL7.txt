@@ -1,0 +1,93 @@
+(1) SETUP POSTGRES (PREF. USE PUPPET FOR THESE STEPS)
+
+yum install -y postgresql postgresql-server postgresql-contrib 
+sudo postgresql-setup initdb
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+sudo -u postgres psql -c 'CREATE ROLE root WITH SUPERUSER LOGIN'
+^ SET ROOT PASSWORD TO PUPPET
+
+(2) CREATE DATABASE USER AND A DATABASE
+
+createdb -O root razor_prd
+createdb -O root razor_dev
+createdb -O root razor
+
+(3) INSTALL LIBARCHIVE
+
+yum install libarchive-devel
+
+(4) INSTALL/SETUP RBENV
+
+git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+cd ~/.rbenv && src/configure && make -C src
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile
+~/.rbenv/bin/rbenv init
+echo eval '"$(rbenv init -)"' >> ~/.bash_profile
+
+— Restart Shell —
+curl -O https://raw.githubusercontent.com/rbenv/rbenv-installer/master/bin/rbenv-doctor && bash rbenv-doctor (MAKE SURE THIS SCRIPT RETURNS 0)
+
+mkdir -p "$(rbenv root)"/plugins
+git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build
+
+(5) SETUP RUBY BUILD ENVIRONMENT
+
+echo "export RUBY_BUILD_CURL_OPTS=--tlsv1" >> ~/.bash_profile
+yum install -y bzip2 openssl-devel readline-devel java-1.7.0-openjdk-devel gcc-c++
+rbenv install jruby-9.1.5.0
+echo "export RBENV_VERSION=jruby-9.1.5.0" >> ~/.bash_profile
+gem install bundler
+
+(6) SETUP AG
+
+yum install -y pcre-devel xz-devel automake
+cd /usr/local/src
+git clone https://github.com/ggreer/the_silver_searcher.git
+cd the_silver_searcher
+./build.sh
+make install
+
+(7) INSTALL/SETUP OTHER DEV TOOLS + ENVIRONMENT CONFIGURATION
+
+yum install -y vim tree
+
+(8) SETUP THE GIT SSH AGENT
+
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N '' -C "enis.inan@puppet.com"
+eval "$(ssh-agent -s)"
+ssh-add -k ~/.ssh/id_rsa
+
+ADD SSH KEY TO GITHUB (USE GITHUB API FOR THIS WORK -- MIGHT NEED ANOTHER SCRIPT, OR MAYBE
+CAN DO IT IN BASH)
+
+(9) CLONE THE RAZOR SERVER
+
+git config --global push.default matching
+git config --global user.email "enis.inan@puppet.com"
+git clone git@github.com:ekinanp/razor-server.git
+cd razor-server
+bundle install
+cp config.yaml.sample config.yaml
+
+^ SHOULD BE ENOUGH FOR A SCRIPT. ADDITIONAL STEPS:
+
+mkdir razor_server_repo_store_root
+echo "export REPO_STORE_ROOT='/root/razor_server_repo_store_root/'" >> ~/.bash_profile
+(CHANGE repo_store_root to point to `/root/razor_server_repo_store_root/`!)
+(CHANGED DATABASE URLS TO USE ROOT W/ PASSWORD PUPPET)
+(CHANGED /var/lib/pgsql/data/pg_hba.conf FROM IDENT TO MD5 (SHOULD GO AS PART OF SETTING UP PGSQL))
+
+THEN DO:
+./bin/razor-admin -e development migrate-database
+torquebox deploy --env development
+torquebox run --bind-address 0.0.0.0
+
+^ NOTE THAT THE APP WILL BE ON PORT 8080 INSTEAD OF 8050 (TALK TO SCOTT M. ABOUT THIS!)
+
+(10) INSTALL AND UNWRAP THE MICROKERNEL 
+
+curl -O https://s3-us-west-2.amazonaws.com/razor-releases/microkernel-008.tar
+tar xf micro*.tar -C $REPO_STORE_ROOT
+
+NOTE: Update RAZOR_API on main machine to point to VM's API.
