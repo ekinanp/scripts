@@ -8,6 +8,7 @@ shift
 
 if [[ -z "$master_vm" ]]; then
   echo "ERROR: no master found!"
+  echo "USAGE: ./install-puppet-agent.sh <master-vm> ([<agent-vm>])*"
   exit 1
 fi
 

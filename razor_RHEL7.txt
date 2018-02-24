@@ -51,6 +51,7 @@ make install
 (7) INSTALL/SETUP OTHER DEV TOOLS + ENVIRONMENT CONFIGURATION
 
 yum install -y vim tree
+echo ":color desert" >> ~/.vimrc
 
 (8) SETUP THE GIT SSH AGENT
 
@@ -67,6 +68,7 @@ git config --global push.default matching
 git config --global user.email "enis.inan@puppet.com"
 git clone git@github.com:ekinanp/razor-server.git
 cd razor-server
+git remote add upstream git@github.com:puppetlabs/razor-server.git
 bundle install
 cp config.yaml.sample config.yaml
 
@@ -75,13 +77,15 @@ cp config.yaml.sample config.yaml
 mkdir razor_server_repo_store_root
 echo "export REPO_STORE_ROOT='/root/razor_server_repo_store_root/'" >> ~/.bash_profile
 (CHANGE repo_store_root to point to `/root/razor_server_repo_store_root/`!)
-(CHANGED DATABASE URLS TO USE ROOT W/ PASSWORD PUPPET)
+(CHANGED DATABASE URLS TO USE ROOT W/ PASSWORD PUPPET) -- REMOVE AND PUT ONE UNDER ALL
 (CHANGED /var/lib/pgsql/data/pg_hba.conf FROM IDENT TO MD5 (SHOULD GO AS PART OF SETTING UP PGSQL))
 
+EDIT /root/.rbenv/versions/jruby-9.1.5.0/lib/ruby/gems/shared/gems/torquebox-server-3.2.0-java/jboss/standalone/configuration/standalone.xml -- CHANGE 8080 to 8150
+
 THEN DO:
-./bin/razor-admin -e development migrate-database
-torquebox deploy --env development
-torquebox run --bind-address 0.0.0.0
+./bin/razor-admin migrate-database
+torquebox deploy
+torquebox run --b 0.0.0.0
 
 ^ NOTE THAT THE APP WILL BE ON PORT 8080 INSTEAD OF 8050 (TALK TO SCOTT M. ABOUT THIS!)
 
