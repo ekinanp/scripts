@@ -1,32 +1,0 @@
-spawn ruby /Users/enis.inan/GitHub/ticketmatch/ticketmatch.rb
-Enter Git From Rev: 3.9.2
-Enter Git To Rev: |master| 3.9.x
-Enter JIRA project: |PUP| FACT
-Enter JIRA fix version: |FACT 3.9.x| FACT 3.9.3
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100  3378  100  3273  100   105   3273    105  0:00:01 --:--:--  0:00:01 12893
--- FACT-1642 (Resolved)
-    d3f4a425  Fix acceptance tests for power linux machines
-    68d84b1c  Add tests for resolving processor facts on Power
-    e6e98aaa  Fix /proc/cpuinfo parsing on Power for Linux machines
--- FACT-1759 (Resolved)
-    6e40ae4b  Compute the cpu counts for Power linux machines
--- FACT-1778 (Closed)
-    9464859b  Attempt to canonicalize search paths
--- FACT-1781 (Resolved)
-    73e53be0  Don't try to print boost::optionals in tests
-** MAINT
-    6b51a7d4  Fix tests for Catch 1.10 update in Leatherman
-    ca83c6b2  Refactor linux/processor_resolver tests and code
-    3e01c56d  Make a safe version of stoi
-    e6c0f11b  Add tests for linux/processor_resolver
-
------ Git commits in Jira -----
-[32mALL COMMIT TOKENS WERE FOUND IN JIRA[0m
-
------ Unresolved Jira tickets not in git commits -----
-[32mALL ISSUES WERE FOUND IN GIT[0m
-
------ Unresolved Jira tickets found in git commits -----
-[32mALL ISSUES WERE RESOLVED IN JIRA[0m

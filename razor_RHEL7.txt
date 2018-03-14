@@ -95,3 +95,28 @@ curl -O https://s3-us-west-2.amazonaws.com/razor-releases/microkernel-008.tar
 tar xf micro*.tar -C $REPO_STORE_ROOT
 
 NOTE: Update RAZOR_API on main machine to point to VM's API.
+
+(11) INSTALL AND CONFIGURE DNSMASQ DHCP-TFTP SERVICE (DHCP for assigning IP addresses; TFTP for transferring relevant boot files, remember that PXE booting is booting from the network)
+
+yum install dnsmasq
+mkdir /var/lib/tftpboot
+chmod 655 /var/lib/tftpboot
+
+EDIT /etc/sysconfig/selinux, set SELINUX=disabled
+EDIT /etc/dnsmasq.conf with 10.0.1.50,10.0.1.120,24h as entry (min,max,lease) [uncomment dhcp-range line]
+
+
+CREATE /etc/dnsmasq.d/razor WITH contents
+  # iPXE sets option 175, mark it for network IPXEBOOT
+  dhcp-match=IPXEBOOT,175
+  dhcp-boot=net:IPXEBOOT,bootstrap.ipxe
+  dhcp-boot=undionly.kpxe
+  # TFTP setup
+  enable-tftp
+  tftp-root=/var/lib/tftpboot
+
+curl -o /var/lib/tftpboot/undionly.kpxe http://boot.ipxe.org/undionly.kpxe 
+curl -o /var/lib/tftpboot/bootstrap.ipxe http://wa6pvd2u4jor726.delivery.puppetlabs.net:8150/api/microkernel/bootstrap?nic_max=10
+
+chkconfig dnsmasq on (ENABLE dnsmasq on boot)
+service dnsmasq start (START the dnsmasq service)

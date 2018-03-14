@@ -1,29 +1,0 @@
-spawn ruby /Users/enis.inan/GitHub/ticketmatch/ticketmatch.rb
-Enter Git From Rev: 1.8.0
-Enter Git To Rev: |master| 1.8.x
-Enter JIRA project: |PUP| PCP
-Enter JIRA fix version: |PCP 1.8.x| pxp-agent 1.8.1
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   816  100   707  100   109    707    109  0:00:01 --:--:--  0:00:01  3187
-** MAINT
-    f970409  Pin lein to 2.7.1
-    383505f  Fix acceptance teardown on Cisco NX
-    4daa144  Fix running with puppetserver nightlies
-    d20c166  Fix local tmp dir creation
-    4946884  Update beaker and install methods
-    847a923  Remove acceptance test cruft
-** REVERT
-    49b3f51  Revert "(maint) Update beaker and install methods"
-    4432e16  Revert "(maint) Fix running with puppetserver nightlies"
-
------ Git commits in Jira -----
-[31mCOMMIT TOKENS NOT FOUND IN JIRA (OR NOT WITH FIX VERSION OF pxp-agent 1.8.1)[0m
-[31mREVERT 49b3f51[0m
-[31mREVERT 4432e16[0m
-
------ Unresolved Jira tickets not in git commits -----
-[32mALL ISSUES WERE FOUND IN GIT[0m
-
------ Unresolved Jira tickets found in git commits -----
-[32mALL ISSUES WERE RESOLVED IN JIRA[0m

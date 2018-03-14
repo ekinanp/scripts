@@ -1,19 +1,0 @@
-spawn ruby /Users/enis.inan/GitHub/ticketmatch/ticketmatch.rb
-Enter Git From Rev: 1.5.4
-Enter Git To Rev: |master| 1.5.x
-Enter JIRA project: |PUP| PCP
-Enter JIRA fix version: |PCP 1.5.x| cpp-pcp-client 1.5.5
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100  1452  100  1338  100   114   1338    114  0:00:01 --:--:--  0:00:01  5185
-** MAINT
-    3db085c  Fix Travis CI jobs meant to use static libs
-
------ Git commits in Jira -----
-[32mALL COMMIT TOKENS WERE FOUND IN JIRA[0m
-
------ Unresolved Jira tickets not in git commits -----
-[32mALL ISSUES WERE FOUND IN GIT[0m
-
------ Unresolved Jira tickets found in git commits -----
-[32mALL ISSUES WERE RESOLVED IN JIRA[0m
