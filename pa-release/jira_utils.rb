@@ -21,6 +21,11 @@ IGNORE_TICKETS = [
 
 @jira_client = PlatformCIUtils::Jira.new(ENV['JIRA_USER'], ENV['JIRA_PASSWORD'], ENV['JIRA_INSTANCE']).instance_variable_get('@jira_client')
 
+def find_ticket_obj(ticket)
+  return ticket if ticket.is_a?(JIRA::Resource::Issue)
+  @jira_client.Issue.find(ticket)
+end
+
 def create_jql_filter(filter_entries)
   jql_filter = 'fixVersion in ('
   filter_entries.each do |project, version|
@@ -49,6 +54,7 @@ end
 
 def create_state_map(tickets)
   tickets.inject({}) do |tickets_in, ticket|
+    ticket_obj = find_ticket_obj(ticket)
     state = ticket.fields['status']['name']
     tickets_in[state] ||= []
     tickets_in[state].push(ticket)
@@ -73,51 +79,59 @@ def extract_ticket_keys(state_map)
 end
 
 def organize_tickets_for_release(filter_entries, options = {})
-  create_state_map(find_tickets_for_release(filter_entries, options))
+  state_map = create_state_map(find_tickets_for_release(filter_entries, options))
+  options[:keys_only] ? extract_ticket_keys(state_map) : state_map
 end
 
 def organize_unresolved_tickets(filter_entries, options = {})
+  options[:ignore_states] = [ "Resolved", "Closed" ]
   organize_tickets_for_release(
     filter_entries,
-    ignore_tickets: options[:ignore_tickets],
-    ignore_states: [ "Resolved", "Closed" ]
+    options
   )
 end
 
 def organize_resolved_tickets(filter_entries, options = {})
+  options[:only_states] = [ "Resolved", "Closed" ]
   organize_tickets_for_release(
     filter_entries,
-    ignore_tickets: options[:ignore_tickets],
-    only_states: [ "Resolved", "Closed" ]
+    options
   )
 end
 
-def has_release_notes?(ticket_obj)
+def has_release_notes?(ticket)
+  ticket_obj = find_ticket_obj(ticket)
   release_notes_field = ticket_obj.fields[RELEASE_NOTES]
   return true if release_notes_field && release_notes_field['value'] == "Not Needed"
   ticket_obj.fields[RELEASE_NOTES_SUMMARY]
 end
 
 def organize_tickets_that_need_release_notes(filter_entries, options = {})
-  tickets_needing_release_notes = find_tickets_for_release(
+  keys_only = options[:keys_only]
+
+  # organize_resolved_tickets should return ticket objects so we override
+  # "keys_only" here.
+  options[:keys_only] = false
+  tickets_needing_release_notes = organize_resolved_tickets(
     filter_entries,
-    ignore_tickets: options[:ignore_tickets],
-    only_states: ['Resolved', 'Closed']
-  ).reject do |ticket|
+    options
+  ).values.flatten.reject do |ticket|
     has_release_notes?(ticket) 
   end
+  state_map = create_state_map(tickets_needing_release_notes)
 
-  create_state_map(tickets_needing_release_notes)
+  keys_only ? extract_ticket_keys(state_map) : state_map
 end
 
 # Includes:
-#   (0) Summary
-#   (1) Involved Devs (only their JIRA username). Ordered by "Assignee" => "Watchers" => "Reporter"
-#   (2) State
-#   (3) Ticket Comments (in chronological order)
+#   * Summary
+#   * Last updated (in PST)
+#   * Involved Devs (only their JIRA username). Ordered by "Assignee" => "Watchers" => "Reporter"
+#   * State
+#   * Ticket Comments (in chronological order)
 #         "User", "Body"
 # and optional fields can also be included
-def get_ticket_info(ticket_obj, options = {})
+def get_ticket_info(ticket, options = {})
   optional_fields = [
     :comments,
     :release_notes,
@@ -125,8 +139,13 @@ def get_ticket_info(ticket_obj, options = {})
   ]
   optional_fields.each { |field| options[field] = false unless options.key?(field) }
 
+  ticket_obj = find_ticket_obj(ticket)
+
   # Get the summary
   summary = ticket_obj.fields['summary']
+
+  # Get the last updated time
+  updated = Time.parse(ticket_obj.updated).in_time_zone("Pacific Time (US & Canada)")
 
   # Get the involved devs
   involved_devs = {}
@@ -139,6 +158,7 @@ def get_ticket_info(ticket_obj, options = {})
 
   return_hash = {}
   return_hash[:state] = state
+  return_hash[:updated] = updated
   return_hash[:summary] = summary
   return_hash[:involved_devs] = involved_devs
 
@@ -157,8 +177,9 @@ def get_ticket_info(ticket_obj, options = {})
   return_hash
 end
 
-def get_ticket_infos(ticket_objs, options = {})
-  ticket_objs.map do |ticket_obj|
+def get_ticket_infos(tickets, options = {})
+  tickets.map do |ticket|
+    ticket_obj = find_ticket_obj(ticket)
     [ticket_obj.key, get_ticket_info(ticket_obj, options)]
   end.to_h
 end
@@ -176,15 +197,40 @@ def add_release_notes(ticket, release_notes, release_notes_summary = nil)
 
   put_req = {
     "fields" => {
-      RELEASE_NOTES => release_notes
+      RELEASE_NOTES => { "value" => release_notes }
     }
   }
   if release_notes != "Not Needed" and not release_notes_summary
     raise "Must provide the release notes summary!"
   end
-  put_req["fields"][RELEASE_NOTES_SUMMARY] = release_notes_summary
+  put_req["fields"][RELEASE_NOTES_SUMMARY] = release_notes_summary if release_notes != "Not Needed"
 
   ticket_obj.save!(put_req)
+end
+
+def add_comment(ticket, body)
+  ticket_obj = find_ticket_obj(ticket)
+  new_comment = ticket_obj.comments.build
+  new_comment.save!(body: body)
+end
+
+# Takes a block that modifies the comment body
+def edit_comment(ticket, match, &block)
+  raise "Must pass in a block to edit the existing comment body!" unless block_given?
+
+  match_re = match.is_a?(Regexp) ? match : Regexp.new(Regexp.escape(match))
+
+  ticket_obj = find_ticket_obj(ticket)
+  comment = ticket_obj.comments.find do |comment|
+    comment.body =~ match_re
+  end
+  
+  unless comment
+    puts("Could find any comments that match the given match. Try again!")
+    return
+  end
+
+  comment.save!(body: yield(comment.body))
 end
 
 # Use @jira_client.Project.find(<project_name>).versions to get a list of all the
