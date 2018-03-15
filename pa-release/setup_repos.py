@@ -75,4 +75,5 @@ def setup_repos(agent_branch, agent_sha, **kwargs):
         component_ref = json.loads(component_json_contents)["ref"]
 
         # Checkout the component reference
+        component_repo.in_repo(cmd("git fetch upstream"))
         component_repo.in_repo(cmd("git checkout %s" % component_ref))

@@ -1,4 +1,8 @@
 require 'platform-ci-utils'
+require 'pp'
+
+# TODO: Add features to automate epic stuff. Probably need to use grasshopper
+# for that.
 
 FILTER_ENTRIES = {
   "puppet-agent" => "5.5.0",
@@ -13,13 +17,22 @@ FILTER_ENTRIES = {
 }
 RELEASE_NOTES = "customfield_11100"
 RELEASE_NOTES_SUMMARY = "customfield_12100"
+TEAM = "customfield_14200"
+MAIN_JIRA_INSTANCE = "https://tickets.puppetlabs.com"
 
 # These tickets have already been processed. Add these as you go.
 IGNORE_TICKETS = [
+  "PA-1779",
+  "PUP-8545",
+  "PUP-723",
+  "PUP 2868",
+  "PUP-7675",
+  "PUP 8501",
+  "PUP-8041"
 ]
 
-
-@jira_client = PlatformCIUtils::Jira.new(ENV['JIRA_USER'], ENV['JIRA_PASSWORD'], ENV['JIRA_INSTANCE']).instance_variable_get('@jira_client')
+@jira_obj = PlatformCIUtils::Jira.new(ENV['JIRA_USER'], ENV['JIRA_PASSWORD'], ENV['JIRA_INSTANCE'])
+@jira_client = @jira_obj.instance_variable_get('@jira_client')
 
 def find_ticket_obj(ticket)
   return ticket if ticket.is_a?(JIRA::Resource::Issue)
@@ -84,7 +97,8 @@ def organize_tickets_for_release(filter_entries, options = {})
 end
 
 def organize_unresolved_tickets(filter_entries, options = {})
-  options[:ignore_states] = [ "Resolved", "Closed" ]
+  options[:ignore_states] ||= []
+  options[:ignore_states] += [ "Resolved", "Closed" ]
   organize_tickets_for_release(
     filter_entries,
     options
@@ -123,6 +137,10 @@ def organize_tickets_that_need_release_notes(filter_entries, options = {})
   keys_only ? extract_ticket_keys(state_map) : state_map
 end
 
+def to_pst_time(time_str)
+  Time.parse(time_str).in_time_zone("Pacific Time (US & Canada)")
+end
+
 # Includes:
 #   * Summary
 #   * Last updated (in PST)
@@ -145,7 +163,17 @@ def get_ticket_info(ticket, options = {})
   summary = ticket_obj.fields['summary']
 
   # Get the last updated time
-  updated = Time.parse(ticket_obj.updated).in_time_zone("Pacific Time (US & Canada)")
+  updated = to_pst_time(ticket_obj.updated) 
+  # Get the team (if applicable)
+  if ticket_obj.fields[TEAM]
+    team = ticket_obj.fields[TEAM]['value']
+  end
+
+  # Get fix versions
+  fix_versions = ticket_obj.fields['fixVersions'].map do |version|
+    version['name']
+  end.uniq
+
 
   # Get the involved devs
   involved_devs = {}
@@ -159,7 +187,9 @@ def get_ticket_info(ticket, options = {})
   return_hash = {}
   return_hash[:state] = state
   return_hash[:updated] = updated
+  return_hash[:fix_versions] = fix_versions
   return_hash[:summary] = summary
+  return_hash[:team] = team
   return_hash[:involved_devs] = involved_devs
 
   if options[:release_notes] and has_release_notes?(ticket_obj)
@@ -171,7 +201,7 @@ def get_ticket_info(ticket, options = {})
 
   # Get the ticket comments
   return_hash[:comments] = ticket_obj.comments.map do |comment|
-    { :author => comment.author['key'], :body => comment.body }
+    { :author => comment.author['key'], :updated => to_pst_time(comment.updated), :body => comment.body }
   end if options[:comments]
 
   return_hash
@@ -245,30 +275,32 @@ end
 
 # This code deletes the passed-in fix version from the ticket
 def delete_fix_version(ticket, version)
+  version_re = Regexp.new(Regexp.escape(version))
   ticket_obj = @jira_client.Issue.find(ticket)
   cur_fix_versions = ticket_obj.fields['fixVersions']
   # If our fix version is not there, no-op. Otherwise, we will be sending out
   # unnecessary e-mail notifications.
-  return true unless cur_fix_versions.find { |fix_version| fix_version['name'] == version }
+  return true unless cur_fix_versions.find { |fix_version| fix_version['name'] =~ version_re }
 
   ticket_obj.save!({
     "fields" => {
-      "fixVersions" => cur_fix_versions.reject { |fix_version| fix_version['name'] == version }
+      "fixVersions" => cur_fix_versions.reject { |fix_version| fix_version['name'] =~ version_re }
     }
   })
 end
 
 # This code adds the specified fix version to the JIRA ticket.
 def add_fix_version(ticket, version)
+  version_re = Regexp.new(Regexp.escape(version))
   ticket_obj = @jira_client.Issue.find(ticket)
   cur_fix_versions = ticket_obj.fields['fixVersions']
   # If our fix version is there, no-op. Otherwise, we will be sending out
   # unnecessary e-mail notifications.
-  return true if cur_fix_versions.find { |fix_version| fix_version['name'] == version }
+  return true if cur_fix_versions.find { |fix_version| fix_version['name'] =~ version_re }
 
   project = parse_project(ticket)
   fix_version_obj = @jira_client.Project.find(project).versions.find do |fix_version|
-    fix_version.name == version
+    fix_version.name =~ version_re
   end
 
   raise "Fix version #{version} does not exist in the project #{project}!" unless fix_version_obj
