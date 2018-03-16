@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+MASTER_VM=uo506pkjr7tv5dc.delivery.puppetlabs.net
+PACKAGE=2017.3.6-rc0-8-g9896bea
+
+vm="$1"
+
+if [[ -z "${vm}" ]]; then
+  echo "USAGE: install-old-agent.sh <vm>"
+  exit 1
+fi
+
+scp -oStrictHostKeyChecking=no root@${MASTER_VM}:/opt/puppetlabs/server/data/packages/public/${PACKAGE}/install.bash .
+scp -oStrictHostKeyChecking=no install.bash root@${vm}:/root
+ssh -t -oStrictHostKeyChecking=no root@$vm "bash install.bash"
+ssh -t -oStrictHostKeyChecking=no root@$vm "puppet agent -t"
+sleep 5
+ssh -t -oStrictHostKeyChecking=no root@${MASTER_VM} "puppet cert sign ${vm}"
+ssh -t -oStrictHostKeyChecking=no root@$vm "puppet agent -t"
+ssh -t -oStrictHostKeyChecking=no root@$vm "puppet resource service puppet ensure=stopped"

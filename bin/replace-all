@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
-USAGE+"replace-all <phrase>"
+USAGE="replace-all <pattern> <replacement>"
 
-phrase="$1"
+pattern="$1"
+replacement="$2"
 
-if [[ -z "${phrase}" ]]; then
+if [[ -z "${pattern}" || -z "${replacement}" ]]; then
   echo "USAGE: ${USAGE}"
   exit 1
 fi
 
-gsed -i
+gsed -i -E "s/${pattern}/${replacement}/g" `ag -l "${pattern}" .`

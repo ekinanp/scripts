@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+USAGE="git-push <flags>"
+
+flags="$@"
+
+git push --set-upstream origin ${flags}
+

@@ -20,7 +20,7 @@ TICKETMATCH_MAP = {
 }
 
 def run_ticketmatch_on(repo_name, **kwargs):
-    setup_repos("5.5.x", AGENT_RELEASE_CANDIDATE, **kwargs)
+    setup_repos("5.5.0-release", AGENT_RELEASE_CANDIDATE, **kwargs)
     print("\n\n\n")
 
     repo = globals()[var_name(repo_name)]

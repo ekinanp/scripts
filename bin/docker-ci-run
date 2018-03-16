@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+USAGE="docker-ci-run <image-name>"
+
+image_name="$1"
+
+if [[ -z "${image_name}" ]]; then
+  echo "USAGE: ${USAGE}"
+  exit 1
+fi
+
+cur_workdir=`pwd`
+
+docker run \
+  -v `pwd`":/${cur_workdir}" \
+  -w "/${cur_workdir}"\
+  -ti "${image_name}"\
+  bash
