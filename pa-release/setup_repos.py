@@ -1,16 +1,9 @@
+from workflow.repos.constants import (REPOS, pa_components)
 from workflow.repos.git_repository import GitRepository
-from workflow.repos.puppet_agent import PuppetAgent
-from workflow.repos.facter import Facter
-from workflow.repos.leatherman import Leatherman
-from workflow.repos.hiera import Hiera 
-from workflow.repos.libwhereami import Libwhereami 
-from workflow.repos.marionette_collective import MarionetteCollective 
-from workflow.repos.puppet import Puppet
-from workflow.repos.pxp_agent import PxpAgent
-from workflow.repos.cpp_pcp_client import CppPcpClient
 
 from workflow.utils import (commit, to_action, identity, const, in_directory, sequence, git, exec_stdout)
 from workflow.actions.repo_actions import bump_version
+from workflow.repos.constants import (REPOS, pa_components)
 from workflow.actions.file_actions import (new_file, modify_line, read_file)
 
 from jira import JIRA
@@ -24,16 +17,6 @@ WORKSPACE = os.path.join(os.path.dirname(os.path.realpath('__file__')), "WORKSPA
 # NOTE: This does not consider private components, which is OK b/c the 5.5.x release
 # doesn't use them. Modify the script (or even the workflow tool) in the future to
 # account for this.
-PA_COMPONENTS = {
-    "cpp-pcp-client" : CppPcpClient,
-    "facter" : Facter,
-    "hiera" : Hiera,
-    "leatherman" : Leatherman,
-    "libwhereami" : Libwhereami,
-    "marionette-collective" : MarionetteCollective,
-    "puppet" : Puppet,
-    "pxp-agent" : PxpAgent,
-}
 
 # Buggy, doesn't account for Bash quoting but simple enough.
 def cmd(cmd, **kwargs):
@@ -49,7 +32,7 @@ def var_name(component):
 # global variables afterwards to use elsewhere.
 def setup_repos(agent_branch, agent_sha, **kwargs):
     reset_branches = kwargs.get('reset_branches', False)
-    globals()['puppet_agent'] = PuppetAgent(workspace = WORKSPACE, stub_branch = identity)
+    globals()['puppet_agent'] = REPOS['puppet-agent'](workspace = WORKSPACE, stub_branch = identity)
     if reset_branches:
         puppet_agent.reset_branch(agent_branch)
 
@@ -59,9 +42,9 @@ def setup_repos(agent_branch, agent_sha, **kwargs):
     components = [os.path.basename(component_json)[:-5] for component_json in component_jsons]
 
     for component in components:
-        if component not in PA_COMPONENTS:
+        if component not in pa_components():
             continue
-        globals()[var_name(component)] = PA_COMPONENTS[component](
+        globals()[var_name(component)] = REPOS[component](
             workspace = WORKSPACE,
             stub_branch = identity,
             puppet_agent = puppet_agent

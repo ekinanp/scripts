@@ -17,8 +17,8 @@ for vm in "$@"; do
   ssh -t -oStrictHostKeyChecking=no root@$vm "curl -k https://${master_vm}:8140/packages/current/install.bash | sudo bash"
   echo ""
   echo "Going to sleep to wait for the agent cert to appear ..."
-  sleep 10
+  sleep 20
   ssh -oStrictHostKeyChecking=no root@$master_vm "puppet cert sign ${vm}" 
-  node_manifest=`echo "node \"'${vm}'\" {" && echo "  include cpp_dev_environment::facter_environment" && echo "}"`
-  ssh -oStrictHostKeyChecking=no root@$master_vm "(echo '' && echo '${node_manifest}') >> ${site_manifest}"
+#  node_manifest=`echo "node \"'${vm}'\" {" && echo "  include cpp_dev_environment::facter_environment" && echo "}"`
+#  ssh -oStrictHostKeyChecking=no root@$master_vm "(echo '' && echo '${node_manifest}') >> ${site_manifest}"
 done

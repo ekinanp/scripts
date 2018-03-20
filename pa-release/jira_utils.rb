@@ -5,15 +5,15 @@ require 'pp'
 # for that.
 
 FILTER_ENTRIES = {
-  "puppet-agent" => "5.5.0",
-  "FACT" => "3.11.0",
-  "MCO" => "2.12.0",
+  "puppet-agent" => "5.3.6",
+  "FACT" => "3.9.6",
+  "MCO" => "2.11.5",
 #  "HI" => "3.4.2",
 #  "cpp-pcp-client" => "1.5.5",
 #  "whereami" => "0.2.0",
-  "PUP" => "5.5.0",
-  "pxp-agent" => "1.9.0",
-  "LTH" => "1.4.0"
+  "PUP" => "5.3.6",
+  "pxp-agent" => "1.8.3",
+  "LTH" => "1.2.3"
 }
 RELEASE_NOTES = "customfield_11100"
 RELEASE_NOTES_SUMMARY = "customfield_12100"
@@ -31,7 +31,7 @@ IGNORE_TICKETS = [
   "PUP-8041"
 ]
 
-@jira_obj = PlatformCIUtils::Jira.new(ENV['JIRA_USER'], ENV['JIRA_PASSWORD'], ENV['JIRA_INSTANCE'])
+@jira_obj = PlatformCIUtils::Jira.new(ENV['JIRA_USER'], ENV['JIRA_PASSWORD'], MAIN_JIRA_INSTANCE)
 @jira_client = @jira_obj.instance_variable_get('@jira_client')
 
 def find_ticket_obj(ticket)
