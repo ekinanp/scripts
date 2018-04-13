@@ -18,10 +18,12 @@ TICKETMATCH_MAP = {
     "pxp-agent"             : ("1.8.2", "PCP", "pxp-agent 1.8.3"),
     "puppet"                : ("5.3.5", "PUP", "PUP 5.3.6"),
     "marionette-collective" : ("2.11.4", "MCO", "MCO 2.11.5"),
+    "libwhereami" : ("0.1.3", "FACT", "FACT 3.9.6"),
+    "leatherman" : ("1.2.2", "LTH", "LTH 1.2.3"),
 }
 
 def run_ticketmatch_on(repo_name, **kwargs):
-    setup_repos("5.3.x", AGENT_RELEASE_CANDIDATE, **kwargs)
+    setup_repos("5.3.6_release", AGENT_RELEASE_CANDIDATE, **kwargs)
     print("\n\n\n")
 
     repo = globals()[var_name(repo_name)]

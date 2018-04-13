@@ -8,9 +8,9 @@ FILTER_ENTRIES = {
   "puppet-agent" => "5.3.6",
   "FACT" => "3.9.6",
   "MCO" => "2.11.5",
-#  "HI" => "3.4.2",
+  "HI" => "3.4.3",
 #  "cpp-pcp-client" => "1.5.5",
-#  "whereami" => "0.2.0",
+#  "whereami" => "0.1.4",
   "PUP" => "5.3.6",
   "pxp-agent" => "1.8.3",
   "LTH" => "1.2.3"
@@ -19,17 +19,6 @@ RELEASE_NOTES = "customfield_11100"
 RELEASE_NOTES_SUMMARY = "customfield_12100"
 TEAM = "customfield_14200"
 MAIN_JIRA_INSTANCE = "https://tickets.puppetlabs.com"
-
-# These tickets have already been processed. Add these as you go.
-IGNORE_TICKETS = [
-  "PA-1779",
-  "PUP-8545",
-  "PUP-723",
-  "PUP 2868",
-  "PUP-7675",
-  "PUP 8501",
-  "PUP-8041"
-]
 
 @jira_obj = PlatformCIUtils::Jira.new(ENV['JIRA_USER'], ENV['JIRA_PASSWORD'], MAIN_JIRA_INSTANCE)
 @jira_client = @jira_obj.instance_variable_get('@jira_client')
