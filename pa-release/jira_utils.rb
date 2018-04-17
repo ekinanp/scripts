@@ -5,15 +5,15 @@ require 'pp'
 # for that.
 
 FILTER_ENTRIES = {
-  "puppet-agent" => "5.3.6",
-  "FACT" => "3.9.6",
-  "MCO" => "2.11.5",
-  "HI" => "3.4.3",
+  "puppet-agent" => "5.5.1",
+  "FACT" => "3.11.1",
+  "MCO" => "2.12.1",
+#  "HI" => "3.4.3",
 #  "cpp-pcp-client" => "1.5.5",
-#  "whereami" => "0.1.4",
-  "PUP" => "5.3.6",
-  "pxp-agent" => "1.8.3",
-  "LTH" => "1.2.3"
+#  "whereami" => "0.2.1",
+  "PUP" => "5.5.1",
+  "pxp-agent" => "1.9.1",
+#  "LTH" => "1.4.1"
 }
 RELEASE_NOTES = "customfield_11100"
 RELEASE_NOTES_SUMMARY = "customfield_12100"

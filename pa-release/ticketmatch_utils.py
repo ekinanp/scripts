@@ -6,24 +6,24 @@ import os
 script_dir = os.path.dirname(os.path.realpath('__file__'))
 exec(open(os.path.join(script_dir, "setup_repos.py")).read())
 
-AGENT_RELEASE_CANDIDATE = "03320b7ccc502ba1b880a0f382ddcd3864bdfd88"
+AGENT_RELEASE_CANDIDATE = "c47a97544f7126e20d63e857350f1d8f71d4823c"
 
 RUN_TICKETMATCH_PATH = os.path.join(script_dir, "run-ticketmatch.sh")
 RUN_TICKETMATCH = os.path.basename(RUN_TICKETMATCH_PATH)
 
 TICKETMATCH_MAP = {
-    "puppet-agent"          : ("5.3.5", "PA", "puppet-agent 5.3.6"),
-    "facter"                : ("3.9.5", "FACT", "FACT 3.9.6"),
-    "hiera"                 : ("3.4.2", "HI", "HI 3.4.3"),
-    "pxp-agent"             : ("1.8.2", "PCP", "pxp-agent 1.8.3"),
-    "puppet"                : ("5.3.5", "PUP", "PUP 5.3.6"),
-    "marionette-collective" : ("2.11.4", "MCO", "MCO 2.11.5"),
-    "libwhereami" : ("0.1.3", "FACT", "FACT 3.9.6"),
-    "leatherman" : ("1.2.2", "LTH", "LTH 1.2.3"),
+    "puppet-agent"          : ("5.5.0", "PA", "puppet-agent 5.5.1"),
+    "facter"                : ("3.11.0", "FACT", "FACT 3.11.1"),
+#    "hiera"                 : ("3.4.2", "HI", "HI 3.4.3"),
+    "pxp-agent"             : ("1.9.0", "PCP", "pxp-agent 1.9.1"),
+    "puppet"                : ("5.5.0", "PUP", "PUP 5.5.1"),
+    "marionette-collective" : ("2.12.0", "MCO", "MCO 2.12.1"),
+    "libwhereami" : ("0.2.0", "FACT", "FACT 3.11.1"),
+    "leatherman" : ("1.4.0", "LTH", "LTH 1.4.0"),
 }
 
 def run_ticketmatch_on(repo_name, **kwargs):
-    setup_repos("5.3.6_release", AGENT_RELEASE_CANDIDATE, **kwargs)
+    setup_repos("5.5.1_release", AGENT_RELEASE_CANDIDATE, **kwargs)
     print("\n\n\n")
 
     repo = globals()[var_name(repo_name)]
