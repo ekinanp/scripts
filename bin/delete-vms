@@ -10,8 +10,7 @@ delete_vm() {
     fi
 
     result=`${cmd} 2>&1`
-
-    if [[ ! ${result} =~ "Something went wrong" ]]; then
+    if [[ $? -eq 0 ]]; then
       echo "${result}"
       return 0
     fi

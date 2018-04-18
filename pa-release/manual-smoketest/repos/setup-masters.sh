@@ -189,9 +189,15 @@ if [[ -z "${master_vm1}" || -z "${master_vm2}" || -z "${agent_version}" || -z "$
   exit 1
 fi
 
-echo "Running '$0' with the following master hosts ..."
+echo "Running the script with the following master hosts ..."
 echo "  Master with PuppetDB installed via. module (master1): ${master_vm1}"
 echo "  Master with PuppetDB installed via. package (master2): ${master_vm2}"
+echo ""
+
+echo "Running the script with the following package versions ..."
+echo "  puppet-agent version: ${agent_version}"
+echo "  puppetserver version: ${server_version}"
+echo "  puppetdb version: ${puppetdb_version}"
 echo ""
 
 echo "STEP: Install puppetserver and puppet-agent on both masters"

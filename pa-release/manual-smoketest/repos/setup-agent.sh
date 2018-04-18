@@ -52,6 +52,10 @@ echo "  MASTER: ${master_vm}"
 echo "  AGENT: ${agent_vm}"
 echo ""
 
+echo "Running the script with the following package versions ..."
+echo "  puppet-agent version: ${agent_version}"
+echo ""
+
 echo "STEP: Install the puppet-agent package"
 master_ip=`on_master "facter ipaddress" | tail -n 1`
 on_agent "echo ${master_ip} puppet >> /etc/hosts"
