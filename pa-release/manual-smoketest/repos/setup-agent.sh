@@ -36,12 +36,13 @@ function on_agent() {
   on_host ${agent_vm} "${cmd}" "${suppress}"
 }
 
-USAGE="USAGE: $0 <master-vm> <agent-vm>"
+USAGE="USAGE: $0 <master-vm> <agent-vm> <agent-version>"
 
 master_vm="$1"
 agent_vm="$2"
+agent_version="$3"
 
-if [[ -z "${master_vm}" || -z "${agent_vm}" ]]; then
+if [[ -z "${master_vm}" || -z "${agent_vm}" || -z "${agent_version}" ]]; then
   echo "${USAGE}"
   exit 1
 fi
@@ -55,7 +56,7 @@ echo "STEP: Install the puppet-agent package"
 master_ip=`on_master "facter ipaddress" | tail -n 1`
 on_agent "echo ${master_ip} puppet >> /etc/hosts"
 on_agent "rpm -Uvh http://yum.puppetlabs.com/puppet5/puppet5-release-el-7.noarch.rpm" 
-on_agent "yum install -y puppet-agent"
+on_agent "yum install -y puppet-agent-${agent_version}"
 echo ""
 echo ""
 

@@ -157,7 +157,7 @@ function install_puppetdb_from_package() {
   
   # Install the PuppetDB package
   echo "STEP: Installing the PuppetDB package ..."
-  on_master ${master_vm} "yum install -y puppetdb puppetdb-termini"
+  on_master ${master_vm} "yum install -y puppetdb-${puppetdb_version} puppetdb-termini-${puppetdb_version}"
   echo ""
   echo ""
   
@@ -176,12 +176,15 @@ function install_puppetdb_from_package() {
   echo ""
 }
 
-USAGE="USAGE: $0 <master-vm1> <master-vm2>"
+USAGE="USAGE: $0 <master-vm1> <master-vm2> <agent-version> <server-version> <puppetdb-version>"
 
 master_vm1="$1"
 master_vm2="$2"
+agent_version="$3"
+server_version="$4"
+puppetdb_version="$5"
 
-if [[ -z "${master_vm1}" || -z "${master_vm2}" ]]; then
+if [[ -z "${master_vm1}" || -z "${master_vm2}" || -z "${agent_version}" || -z "${server_version}" || -z "${puppetdb_version}}" ]]; then
   echo "${USAGE}"
   exit 1
 fi
@@ -197,13 +200,13 @@ for master_vm in ${master_vm1} ${master_vm2}; do
   on_master ${master_vm} "rpm -Uvh http://yum.puppetlabs.com/puppet5/puppet5-release-el-7.noarch.rpm" 
 
   echo "STEP: Install puppet-agent on ${which_master}"
-  on_master ${master_vm} "yum install -y puppet-agent"
+  on_master ${master_vm} "yum install -y puppet-agent-${agent_version}"
   on_master ${master_vm} "echo \`facter ipaddress\` puppet > /etc/hosts"
   echo ""
   echo ""
 
   echo "STEP: Install puppetserver on ${which_master}"
-  on_master ${master_vm} "yum install -y puppetserver"
+  on_master ${master_vm} "yum install -y puppetserver-${server_version}"
   on_master ${master_vm} "puppet resource service puppetserver ensure=running"
   on_master ${master_vm} "puppet agent -t"
   echo ""
