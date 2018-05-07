@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+OVFTOOL='/Applications/VMware Fusion.app/Contents/Library/VMware OVF Tool/ovftool'
+
+USAGE="./ova_to_vmx <ova_path> <template_name>"
+
+ova_path="$1"
+template_name="$2"
+
+if [[ -z "${ova_path}" || -z "${template_name}" ]]; then
+  echo "USAGE: ${USAGE}"
+  exit 1
+fi
+
+artifact_name="${template_name}-vmware-base"
+vmx_dir="output-${artifact_name}"
+vmx_path="packer-${artifact_name}.vmx"
+
+# Create the VMX file
+rm -rf "${vmx_dir}"
+mkdir "${vmx_dir}"
+builtin pushd "${vmx_dir}"
+  echo "yes" | "${OVFTOOL}" -tt=VMX "../${ova_path}" "${vmx_path}"
+builtin popd
+
+# Configure shared networking
+gsed -i 's/ethernet0.connectionType = "bridged"/ethernet0.connectionType = "nat"/' "${vmx_dir}/${vmx_path}"
+gsed -i '/ethernet0.startConnected/d' "${vmx_dir}/${vmx_path}"

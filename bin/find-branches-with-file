@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+USAGE="find-branches-with-file <file> [remote]"
+
+file="$1"
+remote="$2"
+
+if [[ -z "${file}" ]]; then
+  echo "USAGE: ${USAGE}"
+  exit 1
+fi
+
+if [[ -z "${remote}" ]]; then
+  remote="upstream"
+fi
+
+branches=`git log --all --format=format:%H "${file}" | while read f; do git branch -r --contains $f; done | sort -u`
+if [[ ! -z "${remote}" ]]; then
+  branches=`echo "${branches}" | grep "${remote}"`
+fi
+echo "${branches}"
