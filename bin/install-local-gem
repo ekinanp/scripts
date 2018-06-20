@@ -5,9 +5,14 @@ USAGE="install-local-gem <gem>"
 gem="$1"
 if [[ -z "${gem}" ]]; then
   echo "USAGE: ${USAGE}"
+  exit 1
 fi
 
 version=`git describe --tags | gsed s/-/./g`
 gem build ${gem}.gemspec
 echo 'yes' | gem uninstall ${gem} --all
-gem install ${gem}-${version}.gem --force
+gem install ${gem}-${version}.gem \
+  --force \
+  --clear-sources \
+  -V \
+  --source 'https://artifactory.delivery.puppetlabs.net/artifactory/api/gems/rubygems/'

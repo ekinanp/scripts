@@ -1,5 +1,37 @@
 #!/usr/bin/env bash
 
+setup_imaging_environment() {
+  export PACKER_VM_OUT_DIR=.
+  export PACKER_VM_SRC_DIR=${PACKER_VM_OUT_DIR}
+
+  export QA_ROOT_PASSWD='$6$7xivPX7Z$Efhnj3oOXJlRWe5QMENzrTHoThXGxq.U1P0lK1w2JN0qJql2Lf66h758ymlm3.8yBxrcNKDDzgie4gncF1buA1'
+  export QA_ROOT_PASSWD_PLAIN='Qu@lity!'
+
+  # vcenter
+  export PACKER_VCENTER_DC="opdx6"
+  export PACKER_VCENTER_CLUSTER="acceptance1"
+  export PACKER_VCENTER_DATASTORE="instance2_1"
+  export PACKER_VCENTER_FOLDER="packer"
+  export PACKER_VCENTER_NET="vmpooler"
+  export PACKER_VCENTER_INSECURE="true"
+
+  # vcenter2
+  export PACKER_VCENTER2_DC="pix7"
+  export PACKER_VCENTER2_CLUSTER="acceptance2"
+  export PACKER_VCENTER2_DATASTORE="tintri-vmpooler-pix"
+  export PACKER_VCENTER2_FOLDER="packer"
+  export PACKER_VCENTER2_NET="vmpooler"
+  export PACKER_VCENTER2_INSECURE="true"
+
+  export PACKER_VCENTER_USERNAME="eso-template@vsphere.local"
+  export PACKER_VCENTER_PASSWORD="skwnBgBL"
+  export PACKER_VCENTER_HOST="vmware-vc2.ops.puppetlabs.net"
+  # The username and password are the same as with vmware-vc6:
+  export PACKER_VCENTER2_USERNAME="${PACKER_VCENTER_USERNAME}"
+  export PACKER_VCENTER2_PASSWORD="${PACKER_VCENTER_PASSWORD}"
+  export PACKER_VCENTER2_HOST="vmware-vc7.ops.puppetlabs.net"
+}
+
 is_common_dir() {
   local dir="$1"
   [[ `basename ${dir}` == "common" ]]
@@ -27,34 +59,42 @@ if [[ -z "${template_file}" ]]; then
   exit 1
 fi
 
+echo "Setting up the imaging environment ..."
+setup_imaging_environment
+
+echo ""
 echo "Locating the directory containing the template file ..."
-template_dir=`pwd`
-while [[ ! -f "${template_dir}/${template_file}" ]]; do
-  template_dir=`next_common_dir ${template_dir}`
-  if [[ "puppetlabs-packer" =~ `basename ${template_dir}` || ${template_dir} == "/" ]]; then
+template_file_dir=`pwd`
+while [[ ! -f "${template_file_dir}/${template_file}" ]]; do
+  template_file_dir=`next_common_dir ${template_file_dir}`
+  if [[ "puppetlabs-packer" =~ `basename ${template_file_dir}` || ${template_file_dir} == "/" ]]; then
     break
   fi
-  template_dir=${template_dir}/common
+  template_file_dir=${template_file_dir}/common
 done
 
-if [[ ! -f "${template_dir}/${template_file}" ]]; then
+if [[ ! -f "${template_file_dir}/${template_file}" ]]; then
   echo "ERROR: Template file does not exist in the puppetlabs-packer repo!"
   exit 1
 fi
 
-echo "Found the template file! It is in the directory ${template_dir}"
+echo "Found the template file! It is in the directory ${template_file_dir}"
 echo "Now searching for any var files along the way ..."
 
 cur_directory=`pwd`
 var_files=""
-while [[ ${cur_directory} != ${template_dir} ]]; do
+while true; do
   if [[ -f ${cur_directory}/vars.json ]]; then
     var_files="-var-file=${cur_directory}/vars.json ${var_files}"
   fi
-  cur_directory=`next_common_dir ${cur_directory}`/common
+  parent_dir=`next_common_dir ${cur_directory}`
+  if [[ `basename "${parent_dir}"` == "templates" ]]; then
+    break
+  fi
+  cur_directory="${parent_dir}/common"
 done
 
-cmd="packer build ${var_files} ${rem_opts} ${template_dir}/${template_file}"
+cmd="packer build ${var_files} ${rem_opts} ${template_file_dir}/${template_file}"
 echo "About to build the template. We will be running the command:"
 echo "    ${cmd}" 
 echo ""
