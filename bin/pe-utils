@@ -1,0 +1,310 @@
+#!/usr/bin/env bash
+
+set -e
+
+## HELPER FUNCTIONS
+
+SCRIPT="$0"
+
+function repeat() {
+  local n="$1"
+  local cmd="$2"
+
+  for i in `seq ${n}`; do
+    ${cmd}
+  done
+}
+
+function matches_regex() {
+  local string="$1"
+  local regex="$2"
+
+  local _
+  _=`echo "${string}" | grep -E "${regex}"`
+
+  return $?
+}
+
+function is_semantic_ver() {
+  local version="$1"
+
+  matches_regex "${version}" '^\d+\.\d+\.\d+$'
+}
+
+function log_info() {
+  local msg="$1"
+
+  echo -e "\033[0;32m${msg}\033[0m"
+}
+
+function log_debug() {
+  local msg="$1"
+
+  echo -e "\033[0;33m${msg}\033[0m"
+}
+
+function set_env_var() {
+  local var="$1"
+  local value="$2"
+
+  local var_regex="export ${var}="
+  if matches_regex "`cat ~/.bash_profile`" "${var_regex}"; then
+    sed -i -e "s/export ${var}=.*/export ${var}=${value}/" ~/.bash_profile
+  else
+    echo "${var_regex}${value}" >> ~/.bash_profile
+  fi
+
+  export "${var}"="${value}"
+}
+
+function bundle_env() {
+  export BUNDLE_PATH=.bundle/gems
+  export BUNDLE_BIN=.bundle/bin
+}
+
+function on_host() {
+  local host="$1"
+  local cmd="$2"
+
+  echo ""
+  log_debug "${host}:"
+  log_debug "    ${cmd}"
+  ssh -t -oStrictHostKeyChecking=no root@${host} "${cmd} 2>&1" 2>/dev/null
+}
+
+function validate_args() {
+  local usage="$1"
+  shift
+  local args="$@"
+  for arg in ${args}; do
+    if [[ -z "${!arg}" ]]; then
+      echo "USAGE: ${SCRIPT} ${usage}"
+      exit 1
+    fi
+  done
+}
+
+function create_file_on() {
+  local host="${1}"
+  local path="${2}"
+  local contents="${3}"
+
+  on_host "${host}" "echo \"${contents}\" > ${path}"
+}
+
+## COMMANDS
+
+function van_build() {
+  local project="$1"
+  local platform="$2"
+
+  local USAGE="van-build <project> <platform> [output-dir] [rem_args]"
+  validate_args "${USAGE}" project platform
+
+  local output_dir="$3"
+  set +e; shift; shift; shift; set -e
+  local rem_args="$@"
+
+  log_path="${project}-${platform}.out"
+  if [[ -n "${output_dir}" ]]; then
+    mkdir -p "${output_dir}"
+    log_path="${output_dir}/${log_path}"
+  fi
+
+  set +e; rm Gemfile.lock; set -e
+
+  bundle_env
+  bundle install 
+  bundle exec build "${project}" "${platform}" ${rem_args} --preserve 2>&1 | tee "${log_path}"
+}
+
+function install_package_on() {
+  local host="$1"
+  local package="$2"
+
+  # TODO: Flesh this out. Just do a 'which' to get the
+  # installation command, then run it.
+}
+
+function add_pe_repo_platform() {
+  local platform="$1"
+  local master="$2"
+  local token="$3"
+
+  master="${master:-${MASTER_HOST}}"
+  token="${token:-${MASTER_TOKEN}}"
+
+  local USAGE="add-pe-repo-platform <platform> [master] [token]"
+  validate_args "${USAGE}" platform master token
+
+  local curl_cmd="curl -k -H X-Authentication:${token}"
+  local base_url="https://${master}:4433/classifier-api/v1/groups"
+
+  log_debug "Getting the JSON of the PE Master group ..."
+
+  set -x
+  local pe_master_group=`${curl_cmd} ${base_url} 2>/dev/null | jq '.[] | select(.name | contains("PE Master"))'`
+  set +x
+
+  local pe_repo_class="pe_repo::platform::${platform}"
+
+  echo ""
+  log_debug "Checking to see if ${platform} has already been added ..."
+
+  local pe_master_classes=`echo "${pe_master_group}" | jq '.classes | keys | .[]'` 
+  if matches_regex "${pe_master_classes}" "${pe_repo_class}"; then
+    log_info "${platform} has already been added! No further work needs to done."
+    return 0
+  fi
+  
+  log_debug "Updating the PE Master group with the new platform ..."
+  local pe_master_id=`echo "${pe_master_group}" | jq -r '.id'`
+  set -x
+  ${curl_cmd} \
+    -X POST \
+    -H 'Content-Type: application/json' \
+    -d "{\"classes\":{\"${pe_repo_class}\":{}}}" \
+    "${base_url}/${pe_master_id}"
+  set +x
+
+  echo ""
+  log_info "Successfully added the platform ${platform} to the master ${master}!"
+  log_info "Triggering a puppet run to apply the changes ..."
+  on_host "${master}" "puppet agent -t"
+}
+
+# TODO: Find a way to check if the agent is already installed on the given
+# host! Could probably just no-op the cert
+function install_puppet_agent_on() {
+  local master="$1"
+  local agent="$2"
+  local pe_ver="$3"
+  pe_ver="${pe_ver:-current}"
+
+  local USAGE="install-puppet-agent-on <master> <agent> [pe_ver]"
+  validate_args "${USAGE}" master agent
+
+  log_info "Installing the puppet-agent on ${agent} with master ${master} and PE version ${pe_ver} ..."
+  on_host "${agent}" "curl -k https://${master}:8140/packages/${pe_ver}/install.bash | sudo bash"
+
+  log_debug "Going to sleep to wait for the agent cert to appear ..."
+  sleep 20
+
+  set +e
+  on_host "${master}" "puppet cert sign ${agent}"
+  set -e
+
+  log_debug "Cert was successfully signed! Now doing the first puppet run ..."
+
+  set +e
+  on_host "${agent}" "/opt/puppetlabs/bin/puppet agent -t"
+  set -e
+}
+
+function create_puppet_access_token() {
+  local master="$1"
+  local user="$2"
+
+  user="${user:-admin}"
+
+  local USAGE="create-puppet-access-token <master>"
+  validate_args "${USAGE}" master
+
+  curl -k -X POST \
+          -H 'Content-Type: application/json' \
+          -d "{\"login\": \"${user}\", \"password\": \"puppetlabs\", \"lifetime\": \"5y\"}" \
+          "https://${master}:4433/rbac-api/v1/auth/token" 2>/dev/null | jq -r '.token'
+}
+
+# Only works for a RHEL vm
+#
+# TODO: Maybe expand it for different platforms?
+function install_puppet_enterprise_on() {
+  local vm="$1"
+  local pe_ver="$2"
+
+  local USAGE="install-puppet-enterprise-on <vm> <pe_ver>"
+  validate_args "${USAGE}" vm pe_ver
+
+  # Create the pe.conf file
+  set +e
+  read -r -d '' pe_conf_contents <<EOF
+{
+  \"console_admin_password\": \"puppetlabs\",
+  \"puppet_enterprise::puppet_master_host\": \"${vm}\",
+  \"pe_install::puppet_master_dnsaltnames\": [
+    \"puppet\"
+  ]
+}
+EOF
+  set -e
+
+  log_info "Creating the pe.conf file ..."
+  local pe_conf="/root/pe.conf"
+  create_file_on "${vm}" "${pe_conf}" "${pe_conf_contents}"
+
+  PE_INSTALL_DIR="puppet-enterprise-${pe_ver}-el-7-x86_64"
+  PE_TAR="${PE_INSTALL_DIR}.tar"
+
+  local download_url
+  if is_semantic_ver "${pe_ver}"; then
+    download_url="http://pe-releases.puppetlabs.lan/${pe_ver}/${PE_TAR}"
+  else
+    main_pe_ver=`echo "${pe_ver}" | grep -o -E '\d+\.\d+' | head -1`
+    download_url="http://neptune.puppetlabs.lan/${main_pe_ver}/ci-ready/${PE_TAR}"
+  fi
+
+  on_host "${vm}" "curl -O ${download_url}"
+  on_host "${vm}" "tar xf ${PE_TAR}"
+  on_host "${vm}" "cd ${PE_INSTALL_DIR} && ./puppet-enterprise-installer -c ${pe_conf} -y -q"
+
+  set +e
+  on_host "${vm}" "puppet agent -t"
+  set -e
+}
+
+function setup_agent() {
+  local platform="$1"
+  local master="$2"
+  local pe_ver="$3"
+
+  master="${master:-${MASTER_HOST}}"
+
+  local USAGE="setup-agent <platform> [master] [pe-ver]"
+  validate_args "${USAGE}" platform
+
+  agent_vm=`get-vm ${platform}`
+  install_puppet_agent_on "${master}" "${agent_vm}" "${pe_ver}"
+
+  echo ""
+  log_info "AGENT-VM: ${agent_vm}"
+}
+
+function setup_master() {
+  local pe_ver="$1"
+
+  validate_args "setup-master <pe_ver>" pe_ver
+  local vm=`get-vm redhat-7-x86_64`
+
+  echo ""
+  log_info "Installing PE ${pe_ver} on ${vm} ..."
+  install_puppet_enterprise_on "${vm}" "${pe_ver}"
+
+  log_info "Creating the puppet access token for the API ..."
+  token=`create_puppet_access_token "${vm}"`
+
+  log_info "Setting up relevant environment variables ..."
+  set_env_var "MASTER_HOST" "${vm}"
+  set_env_var "MASTER_TOKEN" "${token}"
+
+  echo ""
+  log_info "MASTER-VM: ${vm}"
+}
+
+cmd="$1"
+shift
+args="$@"
+
+validate_args "${script} <cmd> [<args>]*" cmd
+
+${cmd//-/_} ${args}

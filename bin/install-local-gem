@@ -12,7 +12,7 @@ version=`git describe --tags | gsed s/-/./g`
 gem build ${gem}.gemspec
 echo 'yes' | gem uninstall ${gem} --all
 gem install ${gem}-${version}.gem \
-  --force \
-  --clear-sources \
-  -V \
-  --source 'https://artifactory.delivery.puppetlabs.net/artifactory/api/gems/rubygems/'
+  --force
+#  --clear-sources \
+#  -V \
+#  --source 'https://artifactory.delivery.puppetlabs.net/artifactory/api/gems/rubygems/'

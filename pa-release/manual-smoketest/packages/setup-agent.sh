@@ -57,7 +57,7 @@ echo ""
 echo "STEP (1): Install the puppet-agent package"
 master_ip=`on_master "facter ipaddress" | tail -n 1`
 on_agent "echo ${master_ip} puppet >> /etc/hosts"
-on_agent "curl -O http://builds.puppetlabs.lan/puppet-agent/${agent_version}/artifacts/el/7/PC1/x86_64/puppet-agent-${agent_version}-1.el7.x86_64.rpm"
+on_agent "curl -O http://builds.puppetlabs.lan/puppet-agent/${agent_version}/artifacts/el/7/puppet5/x86_64/puppet-agent-${agent_version}-1.el7.x86_64.rpm"
 on_agent "rpm -ivh puppet-agent-${agent_version}-1.el7.x86_64.rpm"
 echo ""
 echo ""

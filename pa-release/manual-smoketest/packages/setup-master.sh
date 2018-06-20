@@ -48,7 +48,7 @@ echo ""
 
 # Install puppet-agent package
 echo "STEP (1): Install the puppet-agent package"
-on_master "curl -O http://builds.puppetlabs.lan/puppet-agent/${agent_version}/artifacts/el/7/PC1/x86_64/puppet-agent-${agent_version}-1.el7.x86_64.rpm"
+on_master "curl -O http://builds.puppetlabs.lan/puppet-agent/${agent_version}/artifacts/el/7/puppet5/x86_64/puppet-agent-${agent_version}-1.el7.x86_64.rpm"
 on_master "rpm -ivh puppet-agent-${agent_version}-1.el7.x86_64.rpm"
 echo ""
 echo ""
