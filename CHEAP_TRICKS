@@ -1,0 +1,15 @@
+* For a PA cpp component, you can just setup-pa-environment or whatever
+
+* USE inspect to get the build script for a component. Create a tool to give you a ballpark parse of this output. Ruby? Yes. Use ruby to do this work.
+
+* For something like puppet, you can:
+    - Run Vanagon once to build the package
+    - Run the dev_environment::basic manifest to set-up vim and git
+    - Comment out all of the components, manually building puppet by seeing how Vanagon does it
+    - Run Vanagon. Since components are commented out, all it will do is build the final package.
+    This should significantly speed up dev. time on this, e.g. such as when you're doing types
+    and providers work.
+    - Then you can just run beaker over and over again on another host to check acceptance tests.
+    - Pattern is:
+        * One build host to iterate on and build package
+        * Provision new hosts to run acceptance tests on
