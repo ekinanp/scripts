@@ -1,6 +1,4 @@
-* For a PA cpp component, you can just setup-pa-environment or whatever
-
-* USE inspect to get the build script for a component. Create a tool to give you a ballpark parse of this output. Ruby? Yes. Use ruby to do this work.
+* For a PA cpp component, you can just setup-pa-environment which grab a build host to do the build on. Can use what's in the Makefile to build everything. For example, if I'm working on Facter, I can swap in my facter and just run 'make facter' on the build host. If certain steps fail (or take too long) I can delete them from the Makefile and work accordingly. Problem is this might take a bit of time to copy things over, but that's ok. Our repos aren't that big so this shouldn't be an issue.
 
 * For something like puppet, you can:
     - Run Vanagon once to build the package

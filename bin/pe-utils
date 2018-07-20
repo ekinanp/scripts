@@ -74,6 +74,13 @@ function on_host() {
   ssh -t -oStrictHostKeyChecking=no root@${host} "${cmd} 2>&1" 2>/dev/null
 }
 
+function cmd_exists() {
+  local host="$1"
+  local cmd="$2"
+
+  on_host "${host}" "type ${cmd}"
+}
+
 function validate_args() {
   local usage="$1"
   shift
@@ -118,6 +125,29 @@ function make_host_json() {
 }
 
 ## COMMANDS
+
+function copy_repo() {
+  local repo="$1"
+  local host="$2"
+  local dir="$3"
+
+  local USAGE="copy-repo <repo> <host> <dir>"
+  validate_args "${USAGE}" repo host dir
+
+  local repo_name=$(basename $(realpath "${repo}"))
+  local archive_path="${repo}/${repo_name}.tar"
+  pushd "${repo}"
+    rm -rf "${archive_path}"
+    commit_sha=`git stash create`
+    if [[ -z "${commit_sha}" ]]; then
+      commit_sha=`git rev-parse HEAD`
+    fi
+    git archive --format="tar" --output=`basename "${archive_path}"` "${commit_sha}"
+  popd
+
+  scp -q "${archive_path}" "root@${host}:${dir}"
+  on_host "${host}" "cd ${dir} && rm -rf ${repo_name} && mkdir -p ${repo_name} && tar -xf ${repo_name}.tar --touch --directory ${repo_name} && rm ${repo_name}.tar"
+}
 
 function get_vm() {
   local template="$1"
@@ -169,12 +199,36 @@ function van_build() {
   bundle exec build "${project}" "${platform}" ${rem_args} --preserve 2>&1 | tee "${log_path}"
 }
 
-function install_package_on() {
-  local host="$1"
-  local package="$2"
+#function install_packagen() {
+#  local host="$1"
+#  local package="$2"
+#}
 
-  # TODO: Flesh this out. Just do a 'which' to get the
-  # installation command, then run it.
+function install_raw_puppet_agent() {
+  local host="$1"
+  local url="$2"
+
+  local archive_name="`basename ${url}`"
+  on_host "${host}" "curl -o ${archive_name} ${url}"
+  if cmd_exists "${host}" "pkgadd"; then
+    noask_contents=$(\
+      echo mail=\
+      && echo instance=overwrite\
+      && echo partial=nocheck\
+      && echo runlevel=nocheck\
+      && echo idepend=nocheck\
+      && echo rdepend=nocheck\
+      && echo space=quit\
+      && echo setuid=nocheck\
+      && echo conflict=nocheck\
+      && echo action=nocheck\
+      && echo basedir=default\
+    )
+    noask_file="noask"
+    create_file_on "${host}" "${noask_file}" "${noask_contents}"
+    on_host "${host}" "gunzip -c ${archive_name} | pkgadd -d /dev/stdin -a "${noask_file}" -n all"
+  # Add more stuff here!
+  fi
 }
 
 function add_pe_repo_platform() {
@@ -339,6 +393,24 @@ function cp_dev_environments() {
   scp -r "${GITHUB_DIR}/dev_environments" "root@${host}:/root/"
 }
 
+# host must have Puppet installed!
+function setup_basic_dev_environment() {
+  local host="$1"
+
+  # We want to trigger runs using puppet apply only.
+  puppet="/opt/puppetlabs/bin/puppet"
+  on_host "${host}" "${puppet} resource service puppet ensure=stopped"
+
+  # Set our GitHub API token
+  on_host "${host}" "echo 'export GITHUB_API_TOKEN=${GITHUB_API_TOKEN}' >> ~/.bash_profile"
+
+  # Copy our dev_environment repo to this machine
+  cp_dev_environments "${host}"
+
+  on_host "${host}" "source ~/.bash_profile && ${puppet} apply --modulepath=\"/root\" -e 'class { \"dev_environments::basic\": }'"
+
+}
+
 # TODO: Add code to checkout agent branch too (possibly)
 # NOTE: Can get build script this way from checking log output. Reverse engineer it.
 function setup_pa_dev_machine() {
@@ -358,16 +430,7 @@ function setup_pa_dev_machine() {
     van_build puppet-agent "${agent_platform}" BUILD_LOGS "${build_vm}" --remote-workdir "/root"
   popd
 
-  # We want to trigger runs using puppet apply only.
-  on_host "${build_vm}" "puppet resource service puppet ensure=stopped"
-
-  # Set our GitHub API token
-  on_host "${build_vm}" "echo 'export GITHUB_API_TOKEN=${GITHUB_API_TOKEN}' >> ~/.bash_profile"
-
-  # Copy our dev_environment repo to this machine
-  cp_dev_environments "${build_vm}"
-
-  on_host "${build_vm}" "source ~/.bash_profile && puppet apply --modulepath=\"/root\" -e 'class { \"dev_environments::basic\": }'"
+  setup_basic_dev_environment "${build_vm}"
 
   echo "BUILD VM: ${build_vm}"
 }
