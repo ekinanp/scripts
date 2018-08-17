@@ -1,5 +1,5 @@
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
+ 
 function Get-Assemblies {
   [AppDomain]::CurrentDomain.GetAssemblies()
 }
@@ -7,7 +7,7 @@ function Get-Assemblies {
 function Get-Types ($Pattern=".") {
   Get-Assemblies | %{
     $ErrorActionPreference = 'SilentlyContinue';
-	$_.GetExportedTypes()
+    $_.GetExportedTypes()
   } | where {$_ -match $Pattern}
 }
 
@@ -19,7 +19,7 @@ function Force-Resolve-Path([string] $path) {
   try {
     $result = (resolve-path $path -ErrorAction 'stop').path
   } catch [System.Management.Automation.ItemNotFoundException] {
-	$result = $_.TargetObject
+    $result = $_.TargetObject
   }
   
   $result
@@ -102,28 +102,28 @@ function Add-Key-To-GitHub([string] $key_file, [string] $token) {
   $fqdn = fqdn
   $keys = do-request `
     -url "https://api.github.com/user/keys" `
-	-method "GET" `
-	-token $token `
-	-body $null
+  	-method "GET" `
+  	-token $token `
+  	-body $null
 	
   foreach ($key in $keys) {
     if ($key.title -eq (fqdn)) {
-	  write-host "We already have an SSH key setup for ${fqdn}. Nothing more to do ..."
-	  return
-	}
+      write-host "We already have an SSH key setup for ${fqdn}. Nothing more to do ..."
+      return
+    }
   }
   
   write-host "Setting up the SSH key for ${fqdn} ..."
   $body = @{
     'title' = $fqdn;
-	'key' = (get-content $key_file | out-string)
+    'key' = (get-content $key_file | out-string)
   } | convertto-json
 
   [void] (do-request `
     -url "https://api.github.com/user/keys" `
-	-method "POST" `
-	-token $token `
-	-body $body)
+  	-method "POST" `
+  	-token $token `
+  	-body $body)
 	
   write-host "Successfully set-up the GitHub SSH key for $fqdn!"
 }
@@ -135,8 +135,8 @@ function Setup-Git-SSH([string] $token) {
   # Generate the ssh pub-private key pair
   Git-Bash `
     "ssh-keygen -t rsa -b 4096 -f ${ssh_key_file} -N '' -C enis.inan@puppet.com" `
-	'eval ${(}ssh-agent -s{)}'`
-	"ssh-add $ssh_key_file"
+  	'eval ${(}ssh-agent -s{)}'`
+  	"ssh-add $ssh_key_file"
 	
   # Wait a bit for Git Bash to generate our SSH keys
   sleep 1
@@ -183,8 +183,8 @@ function Unset-Env-Var([switch] $permanent, [string] $var) {
   if ($permanent) {
     [System.Environment]::SetEnvironmentVariable(
       $var,
-	  $null,
-	  [System.EnvironmentVariableTarget]::User
+      $null,
+      [System.EnvironmentVariableTarget]::User
     )
   }
 }
@@ -202,8 +202,8 @@ function Set-Env-Var([switch] $permanent, [string] $var, [object] $block = (iden
   if ($permanent) {
     [System.Environment]::SetEnvironmentVariable(
       $var,
-	  $new_value,
-	  [System.EnvironmentVariableTarget]::User
+      $new_value,
+      [System.EnvironmentVariableTarget]::User
     )
   }
 }
@@ -225,29 +225,29 @@ function With-Env {
     foreach ($env_var in $env_vars) {
       [string] $var, [string] $value = @($env_var.split('=', 2))
       $old_vals[$var] = get-env-var -AllowNullValue $var
-	  set-env-var $var $value
+      set-env-var $var $value
     }
 	
-	Invoke-Command -ScriptBlock $code
+	  Invoke-Command -ScriptBlock $code
   } finally {
     foreach ($var in $old_vals.keys) {
-	  if ( is-null $old_vals[$var] ) {
-	    unset-env-var $var
-	  } else {
-	    set-env-var $var $old_vals[$var]
+      if ( is-null $old_vals[$var] ) {
+        unset-env-var $var
+      } else {
+        set-env-var $var $old_vals[$var]
       }
-	}
+    }
   }
 }
 
 function Add-To-Path([switch] $Permanent, [string] $dir) {
   set-env-var -Permanent:$permanent PATH {
     $old_value = $args[0]
-	if (-Not ($old_value -match [regex]::Escape($dir))) {
-	  $args[0] + ";${dir}"
-	} else {
-	  $old_value
-	}
+  	if (-Not ($old_value -match [regex]::Escape($dir))) {
+      $args[0] + ";${dir}"
+    } else {
+      $old_value
+    }
   }
 }
 
@@ -268,7 +268,7 @@ function Install-Executable(
   
   $actual_exe_file = @(dir $ExeFile)
   if ( $actual_exe_file.length -ne 1) {
-	throw "${ExeFile} must specify only one .exe file. Right now, it specifies: ${actual_exe_file}"
+    throw "${ExeFile} must specify only one .exe file. Right now, it specifies: ${actual_exe_file}"
   }
   write-host "Found .exe file at $($actual_exe_file.fullname). Pointing PATH to it ..."
   $exe_dir = split-path $actual_exe_file
@@ -306,8 +306,8 @@ function Install-Ruby() {
   
   Install-Executable `
     -Url $url `
-	-ExeFile 'C:\Ruby24*\bin\ruby.exe'
-	-Name 'Ruby'
+    -ExeFile 'C:\Ruby24*\bin\ruby.exe'
+    -Name 'Ruby'
 }
 
 function Install-Ag() {
@@ -317,8 +317,8 @@ function Install-Ag() {
 function Install-Vim() {
   Install-Executable `
     -Url 'ftp://ftp.vim.org/pub/vim/pc/gvim81.exe' `
-	-ExeFile "${env:ProgramFiles(x86)}\Vim\*\vim.exe" `
-	-Name 'Vim'
+    -ExeFile "${env:ProgramFiles(x86)}\Vim\*\vim.exe" `
+    -Name 'Vim'
 }
 
 function Install-Vim-Plugin([string] $plugin) {
@@ -343,6 +343,12 @@ function Configure-Vim() {
 execute pathogen#infect()
 syntax on
 filetype plugin indent on
+
+set tabstop=2
+set expandtab
+set autoindent
+set smartindent
+set shiftwidth=2
 "@ | set-content -Encoding UTF8 -Path (join-path "${env:USERPROFILE}" "_vimrc")
 
   $vim_plugins = 'rodjek/vim-puppet','kien/rainbow_parentheses.vim','PProvost/vim-ps1'
