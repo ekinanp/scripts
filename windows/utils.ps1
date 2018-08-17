@@ -1,7 +1,21 @@
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 ## UTILITIES
- 
+
+function Required([string] $ParamName) {
+  throw "${ParamName} is required!"
+}
+
+function In-Dir([string] $Dir = (Required 'dir'), [scriptblock] $code = (Required 'code')) {
+  try {
+    Push-Location $dir
+
+    Invoke-Command -ScriptBlock $code
+  } finally {
+    Pop-Location
+  }
+}
+
 function Get-Assemblies {
   [AppDomain]::CurrentDomain.GetAssemblies()
 }
@@ -193,6 +207,8 @@ function Setup-Git-Config() {
   git config --global 'user.email' "enis.inan@puppet.com"
   git config --global 'user.username' "ekinanp"
   git config --global 'push.default' "simple"
+  git config --global 'core.autocrlf' 'true'
+  git config --global core.whitespace cr-at-eol
 }
 
 function Git-Bash {
@@ -264,9 +280,9 @@ function Setup-Git([string] $token) {
 
 # Some parts here are manual, specifically the Installer's GUI.
 function Install-Executable(
-  [string] $Url = (throw "Executable URL must be specified!"),
-  [string] $ExeFile = (throw ".exe file wildcard must be specified!"),
-  [string] $Name = (throw "Executable name must be specified!")
+  [string] $Url = (Required 'Url'),
+  [string] $ExeFile = (Required '.exe file wildcard'),
+  [string] $Name = (Required '.exe name')
 ) {
   $ErrorActionPreference = 'Stop'
   
@@ -290,7 +306,7 @@ function Install-Executable(
 }
 
 function Install-Simple-Executable(
-  [string] $Url = (throw "Executable URL must be specified!"),
+  [string] $Url = (Required 'Url'),
   [string] $Name = $null
 ) {
   if (-Not $Name) {
@@ -309,7 +325,7 @@ function Install-Ruby() {
   
   Install-Executable `
     -Url $url `
-    -ExeFile 'C:\Ruby24*\bin\ruby.exe'
+    -ExeFile 'C:\Ruby24*\bin\ruby.exe' `
     -Name 'Ruby'
 }
 
@@ -366,30 +382,39 @@ function Setup-Vim() {
 }
 
 # CONEMU:
+#   * BROWSER: https://www.fosshub.com/ConEmu.html/ConEmuSetup.180626.exe
 #   * Choose Powershell as default
 #   * In settings, under General -> Appearance:
 #         Uncheck "Show Search Field in Tab Bar" 
 #   * In settings, enable the following macros:
 #         Ctrl + N => Create(2, 0)
-#         Ctrl + C => Close("active", "tab")
 #         Ctrl + T => Shell("new_console:a", "powershell.exe", "", "%CD%")
+#         Ctrl + Q => Close("active", "tab")
 
 ## FUNCTION TO SET-UP BASIC DEV. ENVIRONMENT ON WINDOWS
 
+function Pause() {
+  [void] (Read-Host "Press any key to continue ... ")
+}
+
+# TODO: Add the SSH public key to talk to other VMs! (Jenkins
+#       acceptance key).
+#
+#       Use Git Bash for this.
 function Setup-Dev-Environment([string] $github_token) {
   setup-git $github_token
+  pause
   install-ruby
+  pause
   install-ag
+  pause
   setup-vim
+  pause
 }
 
 #######################################################
 # Useful Commands (dup of pe-utils, basically)
 #######################################################
-
-function Required([string] $ParamName) {
-  throw "${ParamName} is required!"
-}
 
 function Make-Host-Hash([string] $HostType = (Required 'HostType')) {
   $ErrorActionPreference = 'Continue'
@@ -415,6 +440,19 @@ function Make-Host-Hash([string] $HostType = (Required 'HostType')) {
 
   throw "Could not find a VM for ${hostType}! Seems to be an invalid platform name."
 }
+
+
+
+<#
+TODO:
+  * Add code for getting a VM, deleting a VM.
+  * Add code for setting up a build host for Vanagon
+  * Add code for copying over a Git repo (specifically Windows platforms) + rebuilding stuff
+      * In Vanagon makefile
+#>
+
+
+
 
 
 
