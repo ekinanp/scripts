@@ -1,4 +1,6 @@
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+## UTILITIES
  
 function Get-Assemblies {
   [AppDomain]::CurrentDomain.GetAssemblies()
@@ -47,28 +49,6 @@ function Touch([string] $path) {
   [void] (new-item -itemtype file $resolved_path)
 }
 
-# CODE TO SETUP GIT
-
-function Setup-Git-Config() {
-  git config --global 'user.name' "Enis Inan"
-  git config --global 'user.email' "enis.inan@puppet.com"
-  git config --global 'user.username' "ekinanp"
-  git config --global 'push.default' "simple"
-}
-
-function Git-Bash {
-  $git_bash_path = dir $env:programfiles -recurse -filter "*git-bash*" | %{$_.fullname}
-  start-process $git_bash_path
-  start-sleep -milliseconds 500
-  $bash_ps = get-wmiobject win32_process | where { $_.name -eq 'bash.exe' }
-   
-  $wshell = new-object -com wscript.shell
-  [void] $wshell.appactivate($bash_ps.parentprocessid)
-  foreach ($cmd in $args) {
-    $wshell.sendkeys("$cmd {ENTER}")
-  }
-}
-
 function Do-Request(
   [string] $url,
   [string] $method,
@@ -94,60 +74,6 @@ function To-Unix-Path([string] $path) {
 
 function To-Win-Path([string] $path) {
   $path -replace '^/c', 'C:' -replace '/','\'
-}
-
-function Add-Key-To-GitHub([string] $key_file, [string] $token) {
-  $ErrorActionPreference = 'stop'
-  
-  $fqdn = fqdn
-  $keys = do-request `
-    -url "https://api.github.com/user/keys" `
-  	-method "GET" `
-  	-token $token `
-  	-body $null
-	
-  foreach ($key in $keys) {
-    if ($key.title -eq (fqdn)) {
-      write-host "We already have an SSH key setup for ${fqdn}. Nothing more to do ..."
-      return
-    }
-  }
-  
-  write-host "Setting up the SSH key for ${fqdn} ..."
-  $body = @{
-    'title' = $fqdn;
-    'key' = (get-content $key_file | out-string)
-  } | convertto-json
-
-  [void] (do-request `
-    -url "https://api.github.com/user/keys" `
-  	-method "POST" `
-  	-token $token `
-  	-body $body)
-	
-  write-host "Successfully set-up the GitHub SSH key for $fqdn!"
-}
-
-function Setup-Git-SSH([string] $token) {
-  $ssh_dir = "$($env:USERPROFILE -replace '\\','/' -replace 'C:','/c')/.ssh"
-  $ssh_key_file = "${ssh_dir}/id_rsa"
-
-  # Generate the ssh pub-private key pair
-  Git-Bash `
-    "ssh-keygen -t rsa -b 4096 -f ${ssh_key_file} -N '' -C enis.inan@puppet.com" `
-  	'eval ${(}ssh-agent -s{)}'`
-  	"ssh-add $ssh_key_file"
-	
-  # Wait a bit for Git Bash to generate our SSH keys
-  sleep 1
-	
-  # Add the generated key to GitHub
-  add-key-to-github (to-win-path "${ssh_key_file}.pub") $token
-}
-
-function Setup-Git([string] $token) {
-  Setup-Git-Config
-  Setup-Git-SSH $token
 }
 
 function Arch {
@@ -240,6 +166,14 @@ function With-Env {
   }
 }
 
+function BinDir() {
+  $bindir = join-path $env:USERPROFILE 'bin'
+  [void] (mkdir -Force $bindir)
+  Add-To-Path -Permanent $bindir
+  
+  $bindir
+}
+
 function Add-To-Path([switch] $Permanent, [string] $dir) {
   set-env-var -Permanent:$permanent PATH {
     $old_value = $args[0]
@@ -249,6 +183,83 @@ function Add-To-Path([switch] $Permanent, [string] $dir) {
       $old_value
     }
   }
+}
+
+
+# DEV ENVIRONMENT SETUP: GIT
+
+function Setup-Git-Config() {
+  git config --global 'user.name' "Enis Inan"
+  git config --global 'user.email' "enis.inan@puppet.com"
+  git config --global 'user.username' "ekinanp"
+  git config --global 'push.default' "simple"
+}
+
+function Git-Bash {
+  $git_bash_path = dir $env:programfiles -recurse -filter "*git-bash*" | %{$_.fullname}
+  start-process $git_bash_path
+  start-sleep -milliseconds 500
+  $bash_ps = get-wmiobject win32_process | where { $_.name -eq 'bash.exe' }
+   
+  $wshell = new-object -com wscript.shell
+  [void] $wshell.appactivate($bash_ps.parentprocessid)
+  foreach ($cmd in $args) {
+    $wshell.sendkeys("$cmd {ENTER}")
+  }
+}
+
+function Add-Key-To-GitHub([string] $key_file, [string] $token) {
+  $ErrorActionPreference = 'stop'
+  
+  $fqdn = fqdn
+  $keys = do-request `
+    -url "https://api.github.com/user/keys" `
+  	-method "GET" `
+  	-token $token `
+  	-body $null
+	
+  foreach ($key in $keys) {
+    if ($key.title -eq (fqdn)) {
+      write-host "We already have an SSH key setup for ${fqdn}. Nothing more to do ..."
+      return
+    }
+  }
+  
+  write-host "Setting up the SSH key for ${fqdn} ..."
+  $body = @{
+    'title' = $fqdn;
+    'key' = (get-content $key_file | out-string)
+  } | convertto-json
+
+  [void] (do-request `
+    -url "https://api.github.com/user/keys" `
+  	-method "POST" `
+  	-token $token `
+  	-body $body)
+	
+  write-host "Successfully set-up the GitHub SSH key for $fqdn!"
+}
+
+function Setup-Git-SSH([string] $token) {
+  $ssh_dir = "$($env:USERPROFILE -replace '\\','/' -replace 'C:','/c')/.ssh"
+  $ssh_key_file = "${ssh_dir}/id_rsa"
+
+  # Generate the ssh pub-private key pair
+  Git-Bash `
+    "ssh-keygen -t rsa -b 4096 -f ${ssh_key_file} -N '' -C enis.inan@puppet.com" `
+  	'eval ${(}ssh-agent -s{)}'`
+  	"ssh-add $ssh_key_file"
+	
+  # Wait a bit for Git Bash to generate our SSH keys
+  sleep 1
+	
+  # Add the generated key to GitHub
+  add-key-to-github (to-win-path "${ssh_key_file}.pub") $token
+}
+
+function Setup-Git([string] $token) {
+  Setup-Git-Config
+  Setup-Git-SSH $token
 }
 
 # Some parts here are manual, specifically the Installer's GUI.
@@ -276,14 +287,6 @@ function Install-Executable(
   write-host "Setting the PATH to point to ${Name} ..."
   Add-To-Path $exe_dir
   write-host "Successfully installed ${Name} !"
-}
-
-function BinDir() {
-  $bindir = join-path $env:USERPROFILE 'bin'
-  [void] (mkdir -Force $bindir)
-  Add-To-Path -Permanent $bindir
-  
-  $bindir
 }
 
 function Install-Simple-Executable(
@@ -357,6 +360,11 @@ set shiftwidth=2
   }
 }
 
+function Setup-Vim() {
+  install-vim
+  configure-vim
+}
+
 # CONEMU:
 #   * Choose Powershell as default
 #   * In settings, under General -> Appearance:
@@ -365,3 +373,49 @@ set shiftwidth=2
 #         Ctrl + N => Create(2, 0)
 #         Ctrl + C => Close("active", "tab")
 #         Ctrl + T => Shell("new_console:a", "powershell.exe", "", "%CD%")
+
+## FUNCTION TO SET-UP BASIC DEV. ENVIRONMENT ON WINDOWS
+
+function Setup-Dev-Environment([string] $github_token) {
+  setup-git $github_token
+  install-ruby
+  install-ag
+  setup-vim
+}
+
+#######################################################
+# Useful Commands (dup of pe-utils, basically)
+#######################################################
+
+function Required([string] $ParamName) {
+  throw "${ParamName} is required!"
+}
+
+function Make-Host-Hash([string] $HostType = (Required 'HostType')) {
+  $ErrorActionPreference = 'Continue'
+
+  foreach ($hostEngine in "vmpooler","nspooler") {
+    if ( $hostEngine -eq "vmpooler" ) {
+      $vm = floaty get "${hostType}" --url 'https://vmpooler.delivery.puppetlabs.net/api/v1' | out-string
+    } else {
+      $vm = floaty get "${hostType}" --service ns --url 'https://nspooler-service-prod-1.delivery.puppetlabs.net' | out-string
+    }
+    if (-Not $?) {
+      continue
+    }
+
+    $_, $hostName, $_ = $vm.split(' ', [StringSplitOptions] 'RemoveEmptyEntries') 
+    @{
+      'hostname' = $hostName;
+      'type' = $hostType;
+      'engine' = $hostEngine
+    }
+    return
+  }
+
+  throw "Could not find a VM for ${hostType}! Seems to be an invalid platform name."
+}
+
+
+
+
