@@ -101,6 +101,13 @@ function create_file_on() {
   on_host "${host}" "echo \"${contents}\" > ${path}"
 }
 
+function to_host_json() {
+  local host_name="$1"
+  local host_type="$2"
+  local host_engine="$2"
+
+  echo "{\"hostname\":\"${host_name}\",\"type\":\"${host_type}\",\"engine\":\"${host_engine}\"}"
+}
 
 function make_host_json() {
   local host_type="$1"
@@ -130,6 +137,7 @@ function copy_repo() {
   local repo="$1"
   local host="$2"
   local dir="$3"
+  local untar="$4"
 
   local USAGE="copy-repo <repo> <host> <dir>"
   validate_args "${USAGE}" repo host dir
@@ -146,7 +154,7 @@ function copy_repo() {
   popd
 
   scp -q "${archive_path}" "root@${host}:${dir}"
-  on_host "${host}" "cd ${dir} && rm -rf ${repo_name} && mkdir -p ${repo_name} && tar -xf ${repo_name}.tar --touch --directory ${repo_name} && rm ${repo_name}.tar"
+  on_host "${host}" "cd ${dir} && rm -rf ${repo_name} && mkdir -p ${repo_name} && pushd ${repo_name} && (tar -xf ../${repo_name}.tar || true) && popd && rm ${repo_name}.tar"
 }
 
 function get_vm() {
@@ -154,6 +162,11 @@ function get_vm() {
 
   local USAGE="get-vm <template>"
   validate_args "${USAGE}" template
+
+  if [[ "${template}" =~ "delivery.puppetlabs.net" ]]; then
+    echo "${template}"
+    return 0
+  fi
 
   host_json=`make_host_json "${template}"`
   if [[ "$?" -ne 0 ]]; then
@@ -210,7 +223,13 @@ function install_raw_puppet_agent() {
 
   local archive_name="`basename ${url}`"
   on_host "${host}" "curl -o ${archive_name} ${url}"
-  if cmd_exists "${host}" "pkgadd"; then
+
+  # Put 'pkg' above 'pkgadd' for Sol 11, since 'pkgadd' also exists on there.
+  if cmd_exists ${host} "pkg"; then
+    on_host "${host}" "pkg install -g ${archive_name} puppet-agent"
+  elif cmd_exists ${host} "rpm"; then
+    on_host "${host}" "rpm -i --ignoreos ${url}"
+  elif cmd_exists "${host}" "pkgadd"; then
     noask_contents=$(\
       echo mail=\
       && echo instance=overwrite\
@@ -227,7 +246,6 @@ function install_raw_puppet_agent() {
     noask_file="noask"
     create_file_on "${host}" "${noask_file}" "${noask_contents}"
     on_host "${host}" "gunzip -c ${archive_name} | pkgadd -d /dev/stdin -a "${noask_file}" -n all"
-  # Add more stuff here!
   fi
 }
 
@@ -430,7 +448,7 @@ function setup_pa_dev_machine() {
     van_build puppet-agent "${agent_platform}" BUILD_LOGS "${build_vm}" --remote-workdir "/root"
   popd
 
-  setup_basic_dev_environment "${build_vm}"
+#  setup_basic_dev_environment "${build_vm}"
 
   echo "BUILD VM: ${build_vm}"
 }
