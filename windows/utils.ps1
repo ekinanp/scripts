@@ -441,7 +441,111 @@ function Make-Host-Hash([string] $HostType = (Required 'HostType')) {
   throw "Could not find a VM for ${hostType}! Seems to be an invalid platform name."
 }
 
+# This is useful for executing e.g. ruby scripts that use
+# the Puppet we build from Vanagon. It makes it so we can
+# iterate on the repo pretty quickly/experiment with how stuff
+# works.
+function With-PuppetEnv([scriptblock] $code) {
+  $PL_BASEDIR = 'C:\ProgramFiles64Folder\PuppetLabs\Puppet'
 
+  $FACTER_env_windows_installdir = $PL_BASEDIR 
+
+  $PUPPET_DIR = "$PL_BASEDIR\puppet"
+  $FACTERDIR = "$PL_BASEDIR\facter"
+  $HIERA_DIR = "$PL_BASEDIR\hiera"
+  $MCOLLECTIVE_DIR = "$PL_BASEDIR\mcollective"
+  $RUBY_DIR = "$PL_BASEDIR\sys\ruby"
+
+  # Delete our system ruby so that we use Puppet's
+  $CUR_PATH = (get-env-var PATH) -replace ([regex]::Escape('C:\Ruby24-x64\bin'))
+  $PATH = "$PUPPET_DIR\bin;$FACTERDIR\bin;$HIERA_DIR\bin;$MCOLLECTIVE_DIR\bin;$PL_BASEDIR\bin;$RUBY_DIR\bin;$PL_BASEDIR\sys\tools\bin;$CUR_PATH"
+
+  # Set the RUBY LOAD_PATH using the RUBYLIB environment variable
+  $RUBYLIB = "$PUPPET_DIR\lib;$FACTERDIR\lib;$HIERA_DIR\lib;$MCOLLECTIVE_DIR\lib;"
+
+  # Translate all slashes to / style to avoid issue #11930
+  $RUBYLIB = $RUBYLIB -replace [regex]::Escape('\'),'/'
+
+  # Enable rubygems support
+  $RUBYOPT = 'rubygems'
+
+  # Set SSL variables to ensure trusted locations are used
+  $SSL_CERT_FILE = "$PUPPET_DIR\ssl\cert.pem"
+  $SSL_CERT_DIR = "$PUPPET_DIR\ssl\certs"
+  $OPENSSL_CONF = "$PUPPET_DIR\ssl\openssl.conf"
+
+  # Now run our command
+  with-env `
+    PL_BASEDIR=$PL_BASEDIR `
+    FACTER_env_windows_installdir=$FACTER_env_windows_installdir `
+    PUPPET_DIR=$PUPPET_DIR `
+    FACTERDIR=$FACTERDIR `
+    HIERA_DIR=$HIERA_DIR `
+    MCOLLECTIVE_DIR=$MCOLLECTIVE_DIR `
+    RUBY_DIR=$RUBY_DIR `
+    PATH=$PATH `
+    RUBYLIB=$RUBYLIB `
+    RUBYOPT=$RUBYOPT `
+    SSL_CERT_FILE=$SSL_CERT_FILE `
+    SSL_CERT_DIR=$SSL_CERT_DIR `
+    OPENSSL_CONF=$OPENSSL_CONF `
+    $code
+}
+
+# TODO: Make symlink from Vanagon dir. of Puppet to the real, expected
+# location of Puppet. This is something for later though. Maybe could add
+# to the Makefile, actually. Might be better to do it there.
+#
+# TODO: Add the option to run presuite and postsuite steps, pref. taking in
+# the right steps as input (so a non-switch set of parameters)
+function Run-AcceptanceTests {
+  Param(
+    [parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [hashtable[]]
+    $absHosts,
+
+    [parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $bhgString,
+
+    [parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $tests,
+
+    [Switch]
+    $init,
+
+    [Switch]
+    $provision
+  )
+
+  $ErrorActionPreference = 'Stop'
+
+  $absHostsJson = $absHosts | ConvertTo-Json -Compress
+
+  In-Dir 'acceptance' {
+    with-env BUNDLE_PATH=.bundle/gems BUNDLE_BIN=.bundle/bin ABS_RESOURCE_HOSTS="$absHostsJson" {
+      bundle install
+
+      $hostsFile = "hosts.yaml"
+      $hostsFileContents = bundle exec beaker-hostgenerator "${bhgString}" --hypervisor abs --disable-default-role --osinfo-version 1 | out-string
+      set-content -Path "${hostsFile}" -Value "$hostsFileContents" -Encoding "ASCII"
+
+      if ($init) {
+        bundle exec beaker init --hosts $hostsFile --options-file 'config/aio/options.rb'
+      }
+
+      if ($provision) {
+        bundle exec beaker provision
+      }
+
+      bundle exec beaker exec "$tests"
+    }
+  }
+}
 
 <#
 TODO:
@@ -450,10 +554,4 @@ TODO:
   * Add code for copying over a Git repo (specifically Windows platforms) + rebuilding stuff
       * In Vanagon makefile
 #>
-
-
-
-
-
-
 
