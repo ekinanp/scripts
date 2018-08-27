@@ -104,7 +104,7 @@ function create_file_on() {
 function to_host_json() {
   local host_name="$1"
   local host_type="$2"
-  local host_engine="$2"
+  local host_engine="$3"
 
   echo "{\"hostname\":\"${host_name}\",\"type\":\"${host_type}\",\"engine\":\"${host_engine}\"}"
 }
@@ -137,12 +137,15 @@ function copy_repo() {
   local repo="$1"
   local host="$2"
   local dir="$3"
-  local untar="$4"
+  local repo_name="$4"
 
   local USAGE="copy-repo <repo> <host> <dir>"
   validate_args "${USAGE}" repo host dir
 
-  local repo_name=$(basename $(realpath "${repo}"))
+  if [[ -z "${repo_name}" ]]; then
+    repo_name=$(basename $(realpath "${repo}"))
+  fi
+
   local archive_path="${repo}/${repo_name}.tar"
   pushd "${repo}"
     rm -rf "${archive_path}"
@@ -206,6 +209,9 @@ function van_build() {
   fi
 
   set +e; rm Gemfile.lock; set -e
+
+  export VANAGON_SSH_KEY="$HOME/.ssh/id_rsa-acceptance"
+  export VANAGON_SSH_AGENT=true
 
   bundle_env
   bundle install 
@@ -308,7 +314,7 @@ function install_puppet_agent_on() {
   validate_args "${USAGE}" master agent
 
   log_info "Installing the puppet-agent on ${agent} with master ${master} and PE version ${pe_ver} ..."
-  on_host "${agent}" "curl -k https://${master}:8140/packages/${pe_ver}/install.bash | sudo bash"
+  on_host "${agent}" "curl -k https://${master}:8140/packages/${pe_ver}/install.bash | bash"
 
   log_debug "Going to sleep to wait for the agent cert to appear ..."
   sleep 20
@@ -322,6 +328,8 @@ function install_puppet_agent_on() {
   set +e
   on_host "${agent}" "/opt/puppetlabs/bin/puppet agent -t"
   set -e
+
+  on_host "${agent}" "/opt/puppetlabs/bin/puppet resource service puppet ensure=stopped"
 }
 
 function create_puppet_access_token() {
@@ -440,6 +448,7 @@ function setup_pa_dev_machine() {
   validate_args "${USAGE}" vm_platform agent_platform agent_branch
 
   build_vm=`get-vm ${vm_platform}`
+  echo "CHECKED OUT: ${build_vm}"
 
   pushd "${GITHUB_DIR}/puppet-agent"
     git fetch upstream
@@ -448,7 +457,7 @@ function setup_pa_dev_machine() {
     van_build puppet-agent "${agent_platform}" BUILD_LOGS "${build_vm}" --remote-workdir "/root"
   popd
 
-#  setup_basic_dev_environment "${build_vm}"
+  setup_basic_dev_environment "${build_vm}"
 
   echo "BUILD VM: ${build_vm}"
 }
