@@ -443,6 +443,7 @@ function setup_pa_dev_machine() {
   local vm_platform="$1"
   local agent_platform="$2"
   local agent_branch="$3"
+  local remote_workdir="${4:-/root}"
 
   local USAGE="setup-pa-dev-machine <vm_platform> <agent_platform> <agent_branch>"
   validate_args "${USAGE}" vm_platform agent_platform agent_branch
@@ -457,9 +458,10 @@ function setup_pa_dev_machine() {
     van_build puppet-agent "${agent_platform}" BUILD_LOGS "${build_vm}" --remote-workdir "/root"
   popd
 
-  setup_basic_dev_environment "${build_vm}"
+#  setup_basic_dev_environment "${build_vm}"
 
   echo "BUILD VM: ${build_vm}"
+  echo "WORKDIR: ${remote_workdir}"
 }
 
 function setup_master() {

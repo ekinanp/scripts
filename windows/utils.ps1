@@ -301,7 +301,7 @@ function Install-Executable(
   $exe_dir = split-path $actual_exe_file
   
   write-host "Setting the PATH to point to ${Name} ..."
-  Add-To-Path $exe_dir
+  Add-To-Path -Permanent $exe_dir
   write-host "Successfully installed ${Name} !"
 }
 
@@ -390,6 +390,12 @@ function Setup-Vim() {
 #         Ctrl + N => Create(2, 0)
 #         Ctrl + T => Shell("new_console:a", "powershell.exe", "", "%CD%")
 #         Ctrl + Q => Close("active", "tab")
+
+# MAKEFILE CHANGES:
+#   * Remove requires in puppet-check on runtime, facter, etc.
+#   * Remove the capability to create the touch files
+#   * Remove the created touch files.
+#       rm -rf puppet-build puppet-check puppet-configure puppet-install
 
 ## FUNCTION TO SET-UP BASIC DEV. ENVIRONMENT ON WINDOWS
 
