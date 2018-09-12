@@ -381,6 +381,42 @@ function Setup-Vim() {
   configure-vim
 }
 
+# This does the following:
+#     * Removes requires in puppet-configure on runtime, facter, etc.
+#     * Removes capability to create touch files
+#     * Removes the created touch files
+function Setup-Makefile() {
+  Param(
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $Path = 'C:\cygwin64\root\Makefile'
+  )  
+
+  # The Makefile's not a large file, so it's OK for us to read its
+  # contents into memory.
+  $contents = Get-Content -Path $Path | Out-String 
+
+  # Remove requires in puppet-configure on runtime, facter, etc.
+  $contents = $contents -replace 'puppet-configure:.*$','puppet-configure: puppet-patch'
+
+  # Remove capability to create touch-files (+ the touch files themselves)
+  # TODO: Rewrite this code.
+  $steps = 'puppet-configure','puppet-build','puppet-check','puppet-install' 
+  $touch_steps = $steps | ForEach-Object { "touch $_" }
+  $is_not_touch_step = {
+    foreach ($touch_step in $touch_steps) {
+      if ($_ -match $touch_step) {
+        return $True
+      }
+    }
+
+    $False
+  }
+  $contents = $contents.split("`n") | Where-Object $is_not_touch_step
+}
+
+
 # CONEMU:
 #   * BROWSER: https://www.fosshub.com/ConEmu.html/ConEmuSetup.180626.exe
 #   * Choose Powershell as default
@@ -389,13 +425,19 @@ function Setup-Vim() {
 #   * In settings, enable the following macros:
 #         Ctrl + N => Create(2, 0)
 #         Ctrl + T => Shell("new_console:a", "powershell.exe", "", "%CD%")
-#         Ctrl + Q => Close("active", "tab")
+#         Ctrl + X => Close("active", "tab")
 
 # MAKEFILE CHANGES:
 #   * Remove requires in puppet-check on runtime, facter, etc.
 #   * Remove the capability to create the touch files
 #   * Remove the created touch files.
 #       rm -rf puppet-build puppet-check puppet-configure puppet-install
+
+# BEAKER CHANGES:
+#   * scp ~/.ssh/id_rsa-acceptance root@<vm>:/cygdrive/c/Users/Administrator/.ssh
+#   * New-Item -ItemType 'SymbolicLink' -Path 'C:\Program Files\Puppet Labs' -Value 'C:\ProgramFiles64Folder\PuppetLabs\'  
+#      * ^ May also need to edit ~/.ssh/environments in cygwin terminal to include this + the ruby bin dir. as paths              PATH=$PATH:/bin:/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/Wbem:/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0:/cygdrive/c/Program Files/Git/cmd:/cygdrive/c/Packer/SysInternals:/cygdrive/c/Users/cyg_server/AppData/Local/Microsoft/WindowsApps:/cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/sys/ruby/bin.
+#      (This is what it should look like)
 
 ## FUNCTION TO SET-UP BASIC DEV. ENVIRONMENT ON WINDOWS
 
@@ -621,3 +663,15 @@ TODO:
       * In Vanagon makefile
 #>
 
+
+function Open-IRB {
+  Param(
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $File = 'C:\cygwin64\VANAGON\puppet\WINDOWS_EPIC\utils.rb'
+  )
+
+  With-PuppetEnv {
+    irb -r $File
+  }
+}
