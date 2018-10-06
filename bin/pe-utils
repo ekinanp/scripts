@@ -133,33 +133,6 @@ function make_host_json() {
 
 ## COMMANDS
 
-function copy_repo() {
-  local repo="$1"
-  local host="$2"
-  local dir="$3"
-  local repo_name="$4"
-
-  local USAGE="copy-repo <repo> <host> <dir>"
-  validate_args "${USAGE}" repo host dir
-
-  if [[ -z "${repo_name}" ]]; then
-    repo_name=$(basename $(realpath "${repo}"))
-  fi
-
-  local archive_path="${repo}/${repo_name}.tar"
-  pushd "${repo}"
-    rm -rf "${archive_path}"
-    commit_sha=`git stash create`
-    if [[ -z "${commit_sha}" ]]; then
-      commit_sha=`git rev-parse HEAD`
-    fi
-    git archive --format="tar" --output=`basename "${archive_path}"` "${commit_sha}"
-  popd
-
-  scp -q "${archive_path}" "root@${host}:${dir}"
-  on_host "${host}" "cd ${dir} && rm -rf ${repo_name} && mkdir -p ${repo_name} && pushd ${repo_name} && (tar -xf ../${repo_name}.tar || true) && popd && rm ${repo_name}.tar"
-}
-
 function get_vm() {
   local template="$1"
 
@@ -484,6 +457,176 @@ function setup_master() {
   echo ""
   log_info "MASTER-VM: ${vm}"
 }
+
+## GIT REPO SYNC. FUNCTIONS
+
+function copy_repo() {
+  local repo="$1"
+  local host="$2"
+  local dir="$3"
+  local repo_name="$4"
+
+  local USAGE="copy-repo <repo> <host> <dir>"
+  validate_args "${USAGE}" repo host dir
+
+  if [[ -z "${repo_name}" ]]; then
+    repo_name=$(basename $(realpath "${repo}"))
+  fi
+
+  local archive_path="${repo}/${repo_name}.tar"
+  pushd "${repo}"
+    rm -rf "${archive_path}"
+    commit_sha=`git stash create`
+    if [[ -z "${commit_sha}" ]]; then
+      commit_sha=`git rev-parse HEAD`
+    fi
+    git archive --format="tar" --output=`basename "${archive_path}"` "${commit_sha}"
+  popd
+
+  scp -q "${archive_path}" "root@${host}:${dir}"
+  on_host "${host}" "cd ${dir} && rm -rf ${repo_name} && mkdir -p ${repo_name} && pushd ${repo_name} && (tar -xf ../${repo_name}.tar || true) && popd && rm ${repo_name}.tar"
+}
+
+##
+
+## PLATFORM-SPECIFIC HOST FUNCTIONS
+
+# We do not build agent packages for the arista host
+arista_host="tsmb3o02bhfz6gt.delivery.puppetlabs.net"
+
+debian_host="ftvl6kedjj0p3oc.delivery.puppetlabs.net"
+ubuntu_host="i9ck5m9dpexp8z8.delivery.puppetlabs.net"
+aix_host="aix71-2.delivery.puppetlabs.net"
+solaris10_host="ozlttz5f8ohdtsc.delivery.puppetlabs.net"
+solaris11_host="k3gulx7r41i1di1.delivery.puppetlabs.net"
+osx_host="on9hcqv6op1461h.delivery.puppetlabs.net"
+rhel_host="v4wf528eg09c0we.delivery.puppetlabs.net"
+windows_host="rzl4cs4mssfg53a.delivery.puppetlabs.net"
+sles12_host="bdeipv7np4sf7zt.delivery.puppetlabs.net"
+
+function copy_changed_files() {
+  local host="$1"
+  local from="${2}"
+  local to="${3:-HEAD}"
+
+  local fqdn="${!host}"
+  if [[ -z "${fqdn}" ]]; then
+    echo "${host} is not a valid host!"
+    exit 1
+  fi
+
+  local repo_name=$(basename $(pwd))
+  
+  # Copy only the changed files to speed-up build time.
+  local changed_files=`git log ${from}..${to} --name-only --pretty=format: | gsed '/^\s*$/d' | grep -v 'lib/CMakeLists.txt'`
+  for file in ${changed_files}; do
+    echo ""
+    if [[ ! -f "${file}" ]]; then
+      log_debug "${file} does not exist in repo. Skipping it ..."
+    else
+      set -x
+      scp "${file}" "root@${fqdn}:/root/${repo_name}/${file}"
+      set +x
+    fi
+    echo ""
+  done
+}
+
+# Returns <bhg_string> <host_type> <engine> <make>
+function host_info() {
+  local host="$1"
+  case $host in
+  arista_host)
+    echo "arista4-32a arista-4-i386 vmpooler make"
+    ;;
+  debian_host)
+    echo "debian8-64a debian-8-x86_64 vmpooler make"
+    ;;
+  ubuntu_host)
+    echo "ubuntu1604-64a ubuntu-1604-x86_64 vmpooler make"
+    ;;
+  aix_host)
+    echo "aix71-POWERfa aix-7.1-power nspooler gmake"
+    ;;
+  solaris10_host)
+    echo "solaris10-64a solaris-10-x86_64 vmpooler gmake"
+    ;;
+  solaris11_host)
+    echo "solaris11-64a solaris-11-x86_64 vmpooler gmake"
+    ;;
+  osx_host)
+    echo "osx1012-64a osx-1012-x86_64 vmpooler make"
+    ;;
+  rhel_host)
+    echo "redhat7-64a redhat-7-x86_64 vmpooler make"
+    ;;
+  windows_host)
+    echo "windows10pro-64a win-10-pro-x86_64 vmpooler make"
+    ;;
+  sles12_host)
+    echo "sles12-64a sles-12-x86_64 vmpooler make"
+    ;;
+  *)
+    echo "INVALID HOST!"
+    exit 1
+    ;;
+  esac
+}
+
+function rebuild_component() {
+  local host="$1"
+  local component="$2"
+
+  local fqdn="${!host}"
+  if [[ -z "${fqdn}" ]]; then
+    echo "${host} is not a valid host!"
+    exit 1
+  fi
+
+  local _
+  local make
+  read _ _ _ make <<< $(host_info ${host})
+  on_host "${fqdn}" "cd /root && ${make} ${component}"
+}
+
+# This replicates what we use in CI
+function setup_common_beaker_environment() {
+  export BUNDLE_PATH=.bundle/gems
+  export BUNDLE_BIN=.bundle/bin
+
+  export BEAKER_HOSTS="hosts.yaml"
+  export BEAKER_VERSION="~> 3.37"
+  export BEAKER_PUPPET_VERSION="git://github.com/puppetlabs/beaker-puppet#0.x"
+  export BEAKER_HOSTGENERATOR_VERSION="~> 1"
+}
+
+function run_acceptance_tests() {
+  local bhg_string="$1"
+  local abs_hosts="$2"
+  local tests="$3"
+  local steps="$4"
+
+  pushd 'acceptance'
+    setup_common_beaker_environment
+    rm -rf Gemfile.lock
+
+    bundle install
+    bundle exec beaker-hostgenerator "${bhg_string}" --hypervisor abs --disable-default-role --osinfo-version 1 > "${BEAKER_HOSTS}"
+
+    export ABS_RESOURCE_HOSTS="${abs_hosts}"
+    if [[ "${steps}" =~ init ]]; then
+      bundle exec beaker init --hosts "${BEAKER_HOSTS}" --options-file 'config/aio/options.rb'
+    fi
+
+    if [[ "${steps}" =~ provision ]]; then
+      bundle exec beaker provision
+    fi
+
+    bundle exec beaker exec "${tests}"
+  popd
+}
+
+## End the useful functions
 
 cmd="$1"
 shift
