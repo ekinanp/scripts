@@ -496,12 +496,13 @@ arista_host="tsmb3o02bhfz6gt.delivery.puppetlabs.net"
 
 debian_host="ftvl6kedjj0p3oc.delivery.puppetlabs.net"
 ubuntu_host="i9ck5m9dpexp8z8.delivery.puppetlabs.net"
-aix_host="aix71-2.delivery.puppetlabs.net"
+aix_host="aix61-2.delivery.puppetlabs.net"
 solaris10_host="ozlttz5f8ohdtsc.delivery.puppetlabs.net"
 solaris11_host="k3gulx7r41i1di1.delivery.puppetlabs.net"
 osx_host="on9hcqv6op1461h.delivery.puppetlabs.net"
 rhel_host="v4wf528eg09c0we.delivery.puppetlabs.net"
-windows_host="rzl4cs4mssfg53a.delivery.puppetlabs.net"
+windows2008r2_host=""
+windows2016_host=""
 sles12_host="bdeipv7np4sf7zt.delivery.puppetlabs.net"
 
 function copy_changed_files() {
@@ -537,34 +538,37 @@ function host_info() {
   local host="$1"
   case $host in
   arista_host)
-    echo "arista4-32a arista-4-i386 vmpooler make"
+    echo "arista4-32 arista-4-i386 vmpooler make"
     ;;
   debian_host)
-    echo "debian8-64a debian-8-x86_64 vmpooler make"
+    echo "debian8-64 debian-8-x86_64 vmpooler make"
     ;;
   ubuntu_host)
-    echo "ubuntu1604-64a ubuntu-1604-x86_64 vmpooler make"
+    echo "ubuntu1604-64 ubuntu-1604-x86_64 vmpooler make"
     ;;
   aix_host)
-    echo "aix71-POWERfa aix-7.1-power nspooler gmake"
+    echo "aix71-POWERf aix-7.1-power nspooler gmake"
     ;;
   solaris10_host)
-    echo "solaris10-64a solaris-10-x86_64 vmpooler gmake"
+    echo "solaris10-64 solaris-10-x86_64 vmpooler gmake"
     ;;
   solaris11_host)
-    echo "solaris11-64a solaris-11-x86_64 vmpooler gmake"
+    echo "solaris11-64 solaris-11-x86_64 vmpooler gmake"
     ;;
   osx_host)
-    echo "osx1012-64a osx-1012-x86_64 vmpooler make"
+    echo "osx1012-64 osx-1012-x86_64 vmpooler make"
     ;;
   rhel_host)
-    echo "redhat7-64a redhat-7-x86_64 vmpooler make"
+    echo "redhat7-64 redhat-7-x86_64 vmpooler make"
     ;;
-  windows_host)
-    echo "windows10pro-64a win-10-pro-x86_64 vmpooler make"
+  windows2008r2_host)
+    echo "windows2008r2-64 win-2008r2-x86_64 vmpooler make"
+    ;;
+  windows2016_host)
+    echo "windows2016-64 win-2016-x86_64 vmpooler make"
     ;;
   sles12_host)
-    echo "sles12-64a sles-12-x86_64 vmpooler make"
+    echo "sles12-64 sles-12-x86_64 vmpooler make"
     ;;
   *)
     echo "INVALID HOST!"
@@ -598,6 +602,15 @@ function setup_common_beaker_environment() {
   export BEAKER_VERSION="~> 3.37"
   export BEAKER_PUPPET_VERSION="git://github.com/puppetlabs/beaker-puppet#0.x"
   export BEAKER_HOSTGENERATOR_VERSION="~> 1"
+
+  # TODO: Remove these overrides after PA-2183
+  export BEAKER_HOSTS="hosts.yaml"
+  export BEAKER_VERSION="file:///Users/enis.inan/GitHub/beaker"
+  export BEAKER_PUPPET_VERSION="file:///Users/enis.inan/GitHub/beaker-puppet"
+  export BEAKER_HOSTGENERATOR_VERSION="~> 1"
+  export SHA="1.10.14"
+  export SUITE_VERSION="1.10.14"
+  export SERVER_VERSION="2.8.1"
 }
 
 function run_acceptance_tests() {
@@ -624,6 +637,63 @@ function run_acceptance_tests() {
 
     bundle exec beaker exec "${tests}"
   popd
+}
+
+function run_aio_tests() {
+  local bhg_string="$1"
+  local abs_hosts="$2"
+  local tests="$3"
+
+  pushd 'acceptance'
+    setup_common_beaker_environment
+    rm -rf Gemfile.lock
+
+    bundle install
+    bundle exec beaker-hostgenerator "${bhg_string}" --hypervisor abs --disable-default-role --osinfo-version 1 > "${BEAKER_HOSTS}"
+
+    export ABS_RESOURCE_HOSTS="${abs_hosts}"
+    export TESTS="${tests}"
+    bundle exec rake ci:test:aio
+  popd
+}
+
+function run_module_tests() {
+  local bhg_string="$1"
+  local abs_hosts="$2"
+  local tests="$3"
+  local new_hosts="$4"
+
+  if [[ -z "${PUPPET_AGENT_SHA}" ]]; then
+    log_error "PUPPET_AGENT_SHA environment variable must be set."
+    exit 1
+  fi
+
+  # Set some common environment variables
+  export BUNDLE_PATH=.bundle/gems
+  export BUNDLE_BIN=.bundle/bin
+  export BEAKER_setfile="hosts.yaml"
+  export BEAKER_debug=true
+  export TEST_FRAMEWORK="beaker-rspec"
+  export BEAKER_VERSION="~> 3.37"
+  export BEAKER_PUPPET_VERSION="git://github.com/puppetlabs/beaker-puppet#0.x"
+  export BEAKER_HOSTGENERATOR_VERSION="~> 1"
+  export BEAKER_destroy="no"
+
+  rm -rf Gemfile.lock
+
+  bundle install
+  if [[ "${new_hosts}" == "yes" ]]; then
+    log_info "Provisioning new hosts ..."
+    bundle exec beaker-hostgenerator "${bhg_string}" --global-config type=aio > "${BEAKER_setfile}"
+  else
+    # TODO: May be useful to have some YAML code that will automatically inject the hostnames from the ABS json?
+    log_info "Using existing hosts in ${abs_hosts} ... Remember to update the hosts.yaml file with the FQDNs of these hosts."
+
+    export BEAKER_provision="no"
+    export ABS_RESOURCE_HOSTS="${abs_hosts}"
+  fi
+
+  bundle exec rspec ${tests}
 }
 
 ## End the useful functions

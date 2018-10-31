@@ -267,7 +267,7 @@ function Setup-Git-SSH([string] $token) {
   	"ssh-add $ssh_key_file"
 	
   # Wait a bit for Git Bash to generate our SSH keys
-  sleep 1
+  sleep 5
 	
   # Add the generated key to GitHub
   add-key-to-github (to-win-path "${ssh_key_file}.pub") $token
