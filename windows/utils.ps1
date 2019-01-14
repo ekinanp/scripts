@@ -434,10 +434,9 @@ function Setup-Makefile() {
 #       rm -rf puppet-build puppet-check puppet-configure puppet-install
 
 # BEAKER CHANGES:
-#   * scp ~/.ssh/id_rsa-acceptance root@<vm>:/cygdrive/c/Users/Administrator/.ssh
-#   * New-Item -ItemType 'SymbolicLink' -Path 'C:\Program Files\Puppet Labs' -Value 'C:\ProgramFiles64Folder\PuppetLabs\'  
-#      * ^ May also need to edit ~/.ssh/environments in cygwin terminal to include this + the ruby bin dir. as paths              PATH=$PATH:/bin:/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/Wbem:/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0:/cygdrive/c/Program Files/Git/cmd:/cygdrive/c/Packer/SysInternals:/cygdrive/c/Users/cyg_server/AppData/Local/Microsoft/WindowsApps:/cygdrive/c/Program Files (x86)/Puppet Labs/Puppet/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/bin:/cygdrive/c/Program Files/Puppet Labs/Puppet/sys/ruby/bin.
-#      (This is what it should look like)
+#   * scp ~/.ssh/id_rsa-acceptance Administrator@<vm>:/cygdrive/c/Users/Administrator/.ssh
+#   * Add to PATH in C:\cygwin64\home\Administrator\.ssh\environment:
+#      * /cygdrive/c/ProgramFiles64Folder/PuppetLabs/Puppet/bin
 
 ## FUNCTION TO SET-UP BASIC DEV. ENVIRONMENT ON WINDOWS
 

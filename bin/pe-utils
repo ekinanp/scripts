@@ -421,7 +421,7 @@ function setup_pa_dev_machine() {
   local USAGE="setup-pa-dev-machine <vm_platform> <agent_platform> <agent_branch>"
   validate_args "${USAGE}" vm_platform agent_platform agent_branch
 
-  build_vm=`get-vm ${vm_platform}`
+  build_vm=`get_vm ${vm_platform}`
   echo "CHECKED OUT: ${build_vm}"
 
   pushd "${GITHUB_DIR}/puppet-agent"
@@ -496,14 +496,15 @@ arista_host="tsmb3o02bhfz6gt.delivery.puppetlabs.net"
 
 debian_host="ftvl6kedjj0p3oc.delivery.puppetlabs.net"
 ubuntu_host="i9ck5m9dpexp8z8.delivery.puppetlabs.net"
-aix_host="aix61-2.delivery.puppetlabs.net"
-solaris10_host="ozlttz5f8ohdtsc.delivery.puppetlabs.net"
-solaris11_host="k3gulx7r41i1di1.delivery.puppetlabs.net"
-osx_host="on9hcqv6op1461h.delivery.puppetlabs.net"
-rhel_host="v4wf528eg09c0we.delivery.puppetlabs.net"
+aix_host="aix71-4.delivery.puppetlabs.net"
+solaris10_host="izs7l2vggmwo57i.delivery.puppetlabs.net"
+solaris11_host="xw50kmdhe8zy2sw.delivery.puppetlabs.net"
+osx_host="lp5bhynqg46m2ik.delivery.puppetlabs.net"
+rhel_host="v9aobat1drj9f6b.delivery.puppetlabs.net"
 windows2008r2_host=""
 windows2016_host=""
 sles12_host="bdeipv7np4sf7zt.delivery.puppetlabs.net"
+fedora29_host="fkpnmwhg7nwe5ho.delivery.puppetlabs.net"
 
 function copy_changed_files() {
   local host="$1"
@@ -550,7 +551,7 @@ function host_info() {
     echo "aix71-POWERf aix-7.1-power nspooler gmake"
     ;;
   solaris10_host)
-    echo "solaris10-64 solaris-10-x86_64 vmpooler gmake"
+    echo "solaris10-64 solaris-10-x86_64 vmpooler make"
     ;;
   solaris11_host)
     echo "solaris11-64 solaris-11-x86_64 vmpooler gmake"
@@ -561,6 +562,15 @@ function host_info() {
   rhel_host)
     echo "redhat7-64 redhat-7-x86_64 vmpooler make"
     ;;
+  fedora28_host)
+    echo "fedora28-64 fedora-28-x86_64 vmpooler make"
+    ;;
+  fedora29_host)
+    echo "fedora29-64 fedora-29-x86_64 vmpooler make"
+    ;;
+  centos_host)
+    echo "centos7-64 centos-7-x86_64 vmpooler make"
+    ;;
   windows2008r2_host)
     echo "windows2008r2-64 win-2008r2-x86_64 vmpooler make"
     ;;
@@ -569,6 +579,9 @@ function host_info() {
     ;;
   sles12_host)
     echo "sles12-64 sles-12-x86_64 vmpooler make"
+    ;;
+  fedora29_host)
+    echo "fedora29-64 fedora-29-x86_64 vmpooler make"
     ;;
   *)
     echo "INVALID HOST!"
@@ -599,18 +612,12 @@ function setup_common_beaker_environment() {
   export BUNDLE_BIN=.bundle/bin
 
   export BEAKER_HOSTS="hosts.yaml"
-  export BEAKER_VERSION="~> 3.37"
-  export BEAKER_PUPPET_VERSION="git://github.com/puppetlabs/beaker-puppet#0.x"
+  export BEAKER_VERSION="~> 4"
+  export BEAKER_PUPPET_VERSION="git://github.com/puppetlabs/beaker-puppet.git#master"
   export BEAKER_HOSTGENERATOR_VERSION="~> 1"
-
-  # TODO: Remove these overrides after PA-2183
-  export BEAKER_HOSTS="hosts.yaml"
-  export BEAKER_VERSION="file:///Users/enis.inan/GitHub/beaker"
-  export BEAKER_PUPPET_VERSION="file:///Users/enis.inan/GitHub/beaker-puppet"
-  export BEAKER_HOSTGENERATOR_VERSION="~> 1"
-  export SHA="1.10.14"
-  export SUITE_VERSION="1.10.14"
-  export SERVER_VERSION="2.8.1"
+  export SERVER_VERSION="6.1.0.SNAPSHOT.2018.11.24T1348"
+  export SHA="0aa34132032299864d0f60da3dcdd1031d53da13"
+  export SUITE_VERSION="5.99.2.738.g0aa3413"
 }
 
 function run_acceptance_tests() {
@@ -671,6 +678,7 @@ function run_module_tests() {
   # Set some common environment variables
   export BUNDLE_PATH=.bundle/gems
   export BUNDLE_BIN=.bundle/bin
+  export BEAKER_keyfile="$HOME/.ssh/id_rsa-acceptance"
   export BEAKER_setfile="hosts.yaml"
   export BEAKER_debug=true
   export TEST_FRAMEWORK="beaker-rspec"
