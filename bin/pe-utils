@@ -293,7 +293,7 @@ function install_puppet_agent_on() {
   sleep 20
 
   set +e
-  on_host "${master}" "puppet cert sign ${agent}"
+  on_host "${master}" "puppetserver ca sign --certname ${agent}"
   set -e
 
   log_debug "Cert was successfully signed! Now doing the first puppet run ..."
@@ -347,7 +347,7 @@ EOF
   local pe_conf="/root/pe.conf"
   create_file_on "${vm}" "${pe_conf}" "${pe_conf_contents}"
 
-  PE_INSTALL_DIR="puppet-enterprise-${pe_ver}-el-7-x86_64"
+  PE_INSTALL_DIR="puppet-enterprise-${pe_ver}-el-8-x86_64"
   PE_TAR="${PE_INSTALL_DIR}.tar"
 
   local download_url
@@ -441,7 +441,7 @@ function setup_master() {
   local pe_ver="$1"
 
   validate_args "setup-master <pe_ver>" pe_ver
-  local vm=`get-vm redhat-7-x86_64`
+  local vm=`get-vm redhat-8-x86_64`
 
   echo ""
   log_info "Installing PE ${pe_ver} on ${vm} ..."
@@ -498,6 +498,7 @@ debian_host="ftvl6kedjj0p3oc.delivery.puppetlabs.net"
 ubuntu_host="i9ck5m9dpexp8z8.delivery.puppetlabs.net"
 aix_host="aix71-4.delivery.puppetlabs.net"
 solaris10_host="izs7l2vggmwo57i.delivery.puppetlabs.net"
+solaris10_sparc_host=""
 solaris11_host="xw50kmdhe8zy2sw.delivery.puppetlabs.net"
 osx_host="lp5bhynqg46m2ik.delivery.puppetlabs.net"
 rhel_host="v9aobat1drj9f6b.delivery.puppetlabs.net"
@@ -553,6 +554,9 @@ function host_info() {
   solaris10_host)
     echo "solaris10-64 solaris-10-x86_64 vmpooler make"
     ;;
+  solaris10_sparc_host)
+    echo "solaris10-SPARC solaris-10-sparc nspooler make"
+    ;;
   solaris11_host)
     echo "solaris11-64 solaris-11-x86_64 vmpooler gmake"
     ;;
@@ -560,7 +564,7 @@ function host_info() {
     echo "osx1012-64 osx-1012-x86_64 vmpooler make"
     ;;
   rhel_host)
-    echo "redhat7-64 redhat-7-x86_64 vmpooler make"
+    echo "redhat8-64 redhat-8-x86_64 vmpooler make"
     ;;
   fedora28_host)
     echo "fedora28-64 fedora-28-x86_64 vmpooler make"
@@ -615,9 +619,9 @@ function setup_common_beaker_environment() {
   export BEAKER_VERSION="~> 4"
   export BEAKER_PUPPET_VERSION="git://github.com/puppetlabs/beaker-puppet.git#master"
   export BEAKER_HOSTGENERATOR_VERSION="~> 1"
-  export SERVER_VERSION="6.1.0.SNAPSHOT.2018.11.24T1348"
-  export SHA="0aa34132032299864d0f60da3dcdd1031d53da13"
-  export SUITE_VERSION="5.99.2.738.g0aa3413"
+  export SERVER_VERSION="6.0.4.SNAPSHOT.2019.01.29T0153"
+  export SHA="25ca9efca2eacb5d63205c5f4720f47c67e1dc13"
+  export SUITE_VERSION="6.0.5.120.g25ca9ef"
 }
 
 function run_acceptance_tests() {
@@ -671,7 +675,7 @@ function run_module_tests() {
   local new_hosts="$4"
 
   if [[ -z "${PUPPET_AGENT_SHA}" ]]; then
-    log_error "PUPPET_AGENT_SHA environment variable must be set."
+    log_debug "PUPPET_AGENT_SHA environment variable must be set."
     exit 1
   fi
 
@@ -682,17 +686,17 @@ function run_module_tests() {
   export BEAKER_setfile="hosts.yaml"
   export BEAKER_debug=true
   export TEST_FRAMEWORK="beaker-rspec"
-  export BEAKER_VERSION="~> 3.37"
-  export BEAKER_PUPPET_VERSION="git://github.com/puppetlabs/beaker-puppet#0.x"
+  export BEAKER_VERSION="~> 4"
+  export BEAKER_PUPPET_VERSION="~> 1"
   export BEAKER_HOSTGENERATOR_VERSION="~> 1"
   export BEAKER_destroy="no"
 
   rm -rf Gemfile.lock
 
-  bundle install
+  bundle install --with system_tests
   if [[ "${new_hosts}" == "yes" ]]; then
     log_info "Provisioning new hosts ..."
-    bundle exec beaker-hostgenerator "${bhg_string}" --global-config type=aio > "${BEAKER_setfile}"
+#    bundle exec beaker-hostgenerator "${bhg_string}" --global-config type=aio > "${BEAKER_setfile}"
   else
     # TODO: May be useful to have some YAML code that will automatically inject the hostnames from the ABS json?
     log_info "Using existing hosts in ${abs_hosts} ... Remember to update the hosts.yaml file with the FQDNs of these hosts."
@@ -702,6 +706,71 @@ function run_module_tests() {
   fi
 
   bundle exec rspec ${tests}
+}
+
+# TODO: This should also sed some config files so we can get NREPL working.
+# Will also need to install java and lein. Do this later.
+function setup_orch_dev_environment() {
+  local ORCH_SERVICES_REPO_PATH="/Users/enis.inan/GitHub/pe-orchestration-services"
+  local PE_BRANCH="lovejoy"
+
+  local master="$1"
+  validate_args "build-orch <master>" master
+
+  for repo_dir in "${ORCH_SERVICES_REPO_PATH}"; do
+    repo_name=`basename "${repo_dir}"`
+    pushd "${repo_dir}"
+      git fetch upstream
+      git checkout "${PE_BRANCH}"
+      git reset --hard upstream/"${PE_BRANCH}"
+      git push origin --force
+  
+      copy_repo "." "${master}" "~/" "${repo_name}"
+    popd
+  done
+}
+
+function build_orch() {
+  local ORCH_REPO_PATH="~/orchestrator"
+  local ORCH_SERVICES_REPO_PATH="~/pe-orchestration-services"
+  local ORCH_SERVICES_JAR="target/orchestration-services-release.jar"
+
+  local master="$1"
+  validate_args "build-orch <master>" master
+
+  set -e
+
+  on_host "${master}" "rm -rf ${ORCH_REPO_PATH}"
+  copy_repo "/Users/enis.inan/GitHub/orchestrator" "${master}" "~/" "orchestrator"
+
+  local orch_version=""
+
+  echo "Building Orch's JAR ..."
+  on_host "${master}" "rm -rf ${ORCH_REPO_PATH}/target"
+  orch_version=`on_host "${master}" "sed -n 's/.*defproject.*orch.*\"\(.*\)\"/\\1/p' ${ORCH_REPO_PATH}/project.clj" | tail -n 1`
+  orch_version=`echo "${orch_version}" | sed -E 's///g'`
+  on_host "${master}" "cd ${ORCH_REPO_PATH} && lein install"
+  echo "Built the orch jar!"
+
+  echo ""
+  echo "Building the uberjar ..."
+  on_host "${master}" "rm -rf ${ORCH_SERVICES_REPO_PATH}/target"
+  on_host "${master}" "sed 's:\\(.*puppetlabs/orch.*\\)\".*\"\(.*\):\\1\"${orch_version}\"\\2:g' ${ORCH_SERVICES_REPO_PATH}/project.clj > ${ORCH_SERVICES_REPO_PATH}/new_project.clj"
+  on_host "${master}" "mv "${ORCH_SERVICES_REPO_PATH}/new_project.clj" ${ORCH_SERVICES_REPO_PATH}/project.clj"
+  on_host "${master}" "cd ${ORCH_SERVICES_REPO_PATH} && lein uberjar"
+  echo ""
+  echo "Built the uberjar!"
+
+  echo ""
+  echo "Moving the uberjar ..."
+  on_host "${master}" "mv ${ORCH_SERVICES_REPO_PATH}/target/orchestration-services-release.jar /opt/puppetlabs/server/apps/orchestration-services/orchestration-services-release.jar"
+
+  echo "Restarting the orch service ..."
+  on_host "${master}" "puppet resource service pe-orchestration-services ensure=stopped"
+  on_host "${master}" "puppet resource service pe-orchestration-services ensure=running"
+  echo "Done!"
+
+  set +e
 }
 
 ## End the useful functions
