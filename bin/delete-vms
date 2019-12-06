@@ -20,7 +20,7 @@ delete_vm() {
   return 1
 }
 
-SCRIPTS_ROOT="/Users/enis.inan/GitHub/scripts"
+SCRIPTS_ROOT="/Users/enisinan/GitHub/scripts"
 source "${SCRIPTS_ROOT}/util/helpers.sh"
 
 USAGE="delete-vms <vm1> <vm2> ... <vmN>"

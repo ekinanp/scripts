@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-HELPERS=/Users/enis.inan/GitHub/scripts/pa-release/helpers.sh
+HELPERS=/Users/enisinan/GitHub/scripts/pa-release/helpers.sh
 source "${HELPERS}"
 
 set -e

@@ -2,7 +2,7 @@
 
 
 proc delete_all {{service "vmpooler"}} {
-  set VMFLOATY "/Users/enis.inan/GitHub/vmfloaty/bin/floaty"
+  set VMFLOATY "/Users/enisinan/GitHub/vmfloaty/bin/floaty"
   if {$service eq "nspooler"} {
     spawn ${VMFLOATY} delete --all --service ns
   } else {

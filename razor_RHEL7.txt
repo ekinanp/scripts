@@ -55,7 +55,7 @@ echo ":color desert" >> ~/.vimrc
 
 (8) SETUP THE GIT SSH AGENT
 
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N '' -C "enis.inan@puppet.com"
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N '' -C "enisinan@puppet.com"
 eval "$(ssh-agent -s)"
 ssh-add -k ~/.ssh/id_rsa
 
@@ -65,7 +65,7 @@ CAN DO IT IN BASH)
 (9) CLONE THE RAZOR SERVER
 
 git config --global push.default matching
-git config --global user.email "enis.inan@puppet.com"
+git config --global user.email "enisinan@puppet.com"
 git clone git@github.com:ekinanp/razor-server.git
 cd razor-server
 git remote add upstream git@github.com:puppetlabs/razor-server.git

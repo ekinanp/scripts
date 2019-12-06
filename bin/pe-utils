@@ -4,7 +4,7 @@ set -e
 
 ## HELPER FUNCTIONS/CONSTANTS
 
-GITHUB_DIR="/Users/enis.inan/GitHub"
+GITHUB_DIR="/Users/enisinan/GitHub"
 
 SCRIPT="$0"
 
@@ -711,7 +711,7 @@ function run_module_tests() {
 # TODO: This should also sed some config files so we can get NREPL working.
 # Will also need to install java and lein. Do this later.
 function setup_orch_dev_environment() {
-  local ORCH_SERVICES_REPO_PATH="/Users/enis.inan/GitHub/pe-orchestration-services"
+  local ORCH_SERVICES_REPO_PATH="/Users/enisinan/GitHub/pe-orchestration-services"
   local PE_BRANCH="lovejoy"
 
   local master="$1"
@@ -741,7 +741,7 @@ function build_orch() {
   set -e
 
   on_host "${master}" "rm -rf ${ORCH_REPO_PATH}"
-  copy_repo "/Users/enis.inan/GitHub/orchestrator" "${master}" "~/" "orchestrator"
+  copy_repo "/Users/enisinan/GitHub/orchestrator" "${master}" "~/" "orchestrator"
 
   local orch_version=""
 

@@ -157,4 +157,4 @@ query_vmfloaty() {
 
 
 # Common constants that may be shared throughout scripts
-VMFLOATY=/Users/enis.inan/GitHub/vmfloaty/bin/floaty
+VMFLOATY=/Users/enisinan/GitHub/vmfloaty/bin/floaty

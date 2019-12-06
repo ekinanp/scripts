@@ -204,7 +204,7 @@ function Add-To-Path([switch] $Permanent, [string] $dir) {
 
 function Setup-Git-Config() {
   git config --global 'user.name' "Enis Inan"
-  git config --global 'user.email' "enis.inan@puppet.com"
+  git config --global 'user.email' "enisinan@puppet.com"
   git config --global 'user.username' "ekinanp"
   git config --global 'push.default' "simple"
   git config --global 'core.autocrlf' 'true'
@@ -262,7 +262,7 @@ function Setup-Git-SSH([string] $token) {
 
   # Generate the ssh pub-private key pair
   Git-Bash `
-    "ssh-keygen -t rsa -b 4096 -f ${ssh_key_file} -N '' -C enis.inan@puppet.com" `
+    "ssh-keygen -t rsa -b 4096 -f ${ssh_key_file} -N '' -C enisinan@puppet.com" `
   	'eval ${(}ssh-agent -s{)}'`
   	"ssh-add $ssh_key_file"
 	

@@ -21,7 +21,7 @@ list_vms_templates() {
   query_vmfloaty "list" | sort
 }
 
-SCRIPTS_ROOT="/Users/enis.inan/GitHub/scripts"
+SCRIPTS_ROOT="/Users/enisinan/GitHub/scripts"
 source "${SCRIPTS_ROOT}/util/helpers.sh"
 
 USAGE="list-vms [active | puppet | templates]"
