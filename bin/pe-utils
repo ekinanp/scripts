@@ -114,14 +114,14 @@ function make_host_json() {
 
   for host_engine in "vmpooler" "nspooler"; do
     if [[ "${host_engine}" == "vmpooler" ]]; then
-      vm=`floaty get "${host_type}" --url 'https://vmpooler.delivery.puppetlabs.net/api/v1'`
+      vm=`floaty get "${host_type}" --url 'https://vmpooler.delivery.puppetlabs.net/api/v1' | yq '.[0]' -r`
     else
       vm=`floaty get "${host_type}" --service ns --url 'https://nspooler-service-prod-1.delivery.puppetlabs.net'`
     fi
     if [[ "$?" -ne 0 ]]; then
       continue
     fi
-    host_name=`echo "${vm}" | awk {'print $2'}`
+    host_name=`echo "${vm}" | awk {'print $1'}`
 
 
     echo "{\"hostname\":\"${host_name}\",\"type\":\"${host_type}\",\"engine\":\"${host_engine}\"}"
@@ -352,10 +352,10 @@ EOF
 
   local download_url
   if is_semantic_ver "${pe_ver}"; then
-    download_url="http://pe-releases.puppetlabs.lan/${pe_ver}/${PE_TAR}"
+    download_url="https://artifactory.delivery.puppetlabs.net/artifactory/enterprise/archives/releases/${pe_ver}/${PE_TAR}"
   else
     main_pe_ver=`echo "${pe_ver}" | grep -o -E '\d+\.\d+' | head -1`
-    download_url="http://neptune.puppetlabs.lan/${main_pe_ver}/ci-ready/${PE_TAR}"
+    download_url="https://artifactory.delivery.puppetlabs.net/artifactory/enterprise/${main_pe_ver}/release/ci-ready/${PE_TAR}"
   fi
 
   on_host "${vm}" "curl -O ${download_url}"
@@ -377,7 +377,7 @@ function setup_agent() {
   local USAGE="setup-agent <platform> [master] [pe-ver]"
   validate_args "${USAGE}" platform
 
-  agent_vm=`get-vm ${platform}`
+  agent_vm=`get_vm ${platform}`
   install_puppet_agent_on "${master}" "${agent_vm}" "${pe_ver}"
 
   echo ""
@@ -441,7 +441,7 @@ function setup_master() {
   local pe_ver="$1"
 
   validate_args "setup-master <pe_ver>" pe_ver
-  local vm=`get-vm redhat-8-x86_64`
+  local vm=`get_vm redhat-8-x86_64`
 
   echo ""
   log_info "Installing PE ${pe_ver} on ${vm} ..."
