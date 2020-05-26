@@ -616,12 +616,12 @@ function setup_common_beaker_environment() {
   export BUNDLE_BIN=.bundle/bin
 
   export BEAKER_HOSTS="hosts.yaml"
-  export BEAKER_VERSION="~> 4"
-  export BEAKER_PUPPET_VERSION="git://github.com/puppetlabs/beaker-puppet.git#master"
-  export BEAKER_HOSTGENERATOR_VERSION="~> 1"
-  export SERVER_VERSION="6.0.4.SNAPSHOT.2019.01.29T0153"
-  export SHA="25ca9efca2eacb5d63205c5f4720f47c67e1dc13"
-  export SUITE_VERSION="6.0.5.120.g25ca9ef"
+  #export BEAKER_VERSION="~> 4"
+  #export BEAKER_PUPPET_VERSION="git://github.com/puppetlabs/beaker-puppet.git#master"
+  #export BEAKER_HOSTGENERATOR_VERSION="~> 1"
+  export SERVER_VERSION="6.11.2.SNAPSHOT.2020.05.21T0152"
+  export SHA="42cdf22b6a28e05372b4ad9bd24c21b3b3d2bf7a"
+  export SUITE_VERSION="6.15.0.257.g42cdf22b"
 }
 
 function run_acceptance_tests() {
