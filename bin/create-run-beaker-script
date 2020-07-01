@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 USAGE="create-run-beaker-script <skeleton> [name]"
-TEMPLATE_PATH="/Users/enisinan/GitHub/scripts/util/beaker-template.sh"
+TEMPLATE_PATH="/Users/enis.inan/GitHub/scripts/util/beaker-template.sh"
 
 skeleton="$1"
 name="$2"

@@ -10,7 +10,7 @@ version="$1"
 major="${BASH_REMATCH[1]}"
 minor="${BASH_REMATCH[2]}"
 patch="${BASH_REMATCH[3]}"
-configure_in_patch="/Users/enisinan/GitHub/puppet-agent/resources/patches/ruby_${major}${minor}${patch}/revert_aix_configure_in_changes.patch"
+configure_in_patch="/Users/enis.inan/GitHub/puppet-agent/resources/patches/ruby_${major}${minor}${patch}/revert_aix_configure_in_changes.patch"
 
 ruby_dir="ruby-${version}"
 ruby_tar="${ruby_dir}.tar.gz"

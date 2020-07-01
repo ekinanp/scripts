@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-SCRIPTS_ROOT=/Users/enisinan/GitHub/scripts
+SCRIPTS_ROOT=/Users/enis.inan/GitHub/scripts
 TICKET_NUMBER="PA-1697"
 source "${SCRIPTS_ROOT}/${TICKET_NUMBER}/helpers.sh"
 

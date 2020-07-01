@@ -1,4 +1,6 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
+
+source "/Users/enis.inan/Github/scripts/util/helpers.sh"
 
 list_vms_active() {
   local ACTIVE_VM_RE="-[ ]+.+"
@@ -21,7 +23,7 @@ list_vms_templates() {
   query_vmfloaty "list" | sort
 }
 
-SCRIPTS_ROOT="/Users/enisinan/GitHub/scripts"
+SCRIPTS_ROOT="/Users/enis.inan/GitHub/scripts"
 source "${SCRIPTS_ROOT}/util/helpers.sh"
 
 USAGE="list-vms [active | puppet | templates]"

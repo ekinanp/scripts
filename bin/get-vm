@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-SCRIPTS_ROOT="/Users/enisinan/GitHub/scripts"
+SCRIPTS_ROOT="/Users/enis.inan/GitHub/scripts"
 source "${SCRIPTS_ROOT}/util/helpers.sh"
 
 USAGE="get-vm <template>"

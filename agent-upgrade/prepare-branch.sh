@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-TILDE=/Users/enisinan
+TILDE=/Users/enis.inan
 TICKET="PE-22821"
 REPO_ROOT="${TILDE}/GitHub/pe_acceptance_tests"
 SCRIPTS_ROOT="${REPO_ROOT}/scripts"

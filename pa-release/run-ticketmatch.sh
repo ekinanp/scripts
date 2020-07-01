@@ -7,7 +7,7 @@ proc validate_arg {{arg}} {
   }
 }
 
-set TICKETMATCH "/Users/enisinan/GitHub/ticketmatch/ticketmatch.rb"
+set TICKETMATCH "/Users/enis.inan/GitHub/ticketmatch/ticketmatch.rb"
 
 set git_from_rev [lindex ${argv} 0]
 set git_to_rev [lindex ${argv} 1]
