@@ -114,7 +114,7 @@ function make_host_json() {
 
   for host_engine in "vmpooler" "nspooler"; do
     if [[ "${host_engine}" == "vmpooler" ]]; then
-      vm=`floaty get "${host_type}" --url 'https://vmpooler.delivery.puppetlabs.net/api/v1' | yq '.[0]' -r`
+      vm=`floaty get "${host_type}" --url 'https://vmpooler.delivery.puppetlabs.net/api/v1' | jq '.[0]' -r`
     else
       vm=`floaty get "${host_type}" --service ns --url 'https://nspooler-service-prod-1.delivery.puppetlabs.net'`
     fi
@@ -710,14 +710,18 @@ function run_module_tests() {
 
 # TODO: This should also sed some config files so we can get NREPL working.
 # Will also need to install java and lein. Do this later.
+#
+# For java, do 'sudo yum install java-1.8.0-openjdk-devel -y' (Java 8 dev environment)
+# for lein, do 'curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein -o /bin/lein && chmod +x /bin/lein'
 function setup_orch_dev_environment() {
   local ORCH_SERVICES_REPO_PATH="/Users/enis.inan/GitHub/pe-orchestration-services"
-  local PE_BRANCH="lovejoy"
+  local CONSOLE_SERVICES_REPO_PATH="/Users/enis.inan/GitHub/pe-console-services"
+  local PE_BRANCH="master"
 
   local master="$1"
-  validate_args "build-orch <master>" master
+  validate_args "setup-orch-dev-environment <master>" master
 
-  for repo_dir in "${ORCH_SERVICES_REPO_PATH}"; do
+  for repo_dir in "${ORCH_SERVICES_REPO_PATH}" "${CONSOLE_SERVICES_REPO_PATH}"; do
     repo_name=`basename "${repo_dir}"`
     pushd "${repo_dir}"
       git fetch upstream
@@ -728,6 +732,9 @@ function setup_orch_dev_environment() {
       copy_repo "." "${master}" "~/" "${repo_name}"
     popd
   done
+
+  on_host "${master}" "yum install java-1.8.0-openjdk-devel -y"
+  on_host "${master}" "curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein -o /bin/lein && chmod +x /bin/lein"
 }
 
 function build_orch() {
@@ -771,6 +778,62 @@ function build_orch() {
   echo "Done!"
 
   set +e
+}
+
+function build_rbac() {
+  local RBAC_REPO_PATH="~/pe-rbac-service"
+  local RBAC_SERVICES_REPO_PATH="~/pe-console-services"
+  local RBAC_SERVICES_JAR="target/-services-release.jar"
+
+  local master="$1"
+  validate_args "build-rbac <master>" master
+
+  set -e
+
+  on_host "${master}" "rm -rf ${RBAC_REPO_PATH}"
+  copy_repo "/Users/enis.inan/GitHub/pe-rbac-service" "${master}" "~/" "pe-rbac-service"
+
+  local rbac_version=""
+
+  echo "Building RBAC's JAR ..."
+  on_host "${master}" "rm -rf ${RBAC_REPO_PATH}/target"
+  rbac_version=`on_host "${master}" "sed -n 's/.*defproject.*rbac.*\"\(.*\)\"/\\1/p' ${RBAC_REPO_PATH}/project.clj" | tail -n 1`
+  rbac_version=`echo "${rbac_version}" | sed -E 's///g'`
+  echo "RBAC version: ${rbac_version}"
+  on_host "${master}" "cd ${RBAC_REPO_PATH} && lein install"
+  echo "Built the RBAC jar!"
+
+  echo ""
+  echo "Building the uberjar ..."
+  on_host "${master}" "rm -rf ${RBAC_SERVICES_REPO_PATH}/target"
+  on_host "${master}" "sed 's:\\(.*puppetlabs/pe-rbac.*\\)\".*\"\(.*\):\\1\"${rbac_version}\"\\2:g' ${RBAC_SERVICES_REPO_PATH}/project.clj > ${RBAC_SERVICES_REPO_PATH}/new_project.clj"
+  on_host "${master}" "mv "${RBAC_SERVICES_REPO_PATH}/new_project.clj" ${RBAC_SERVICES_REPO_PATH}/project.clj"
+  on_host "${master}" "cd ${RBAC_SERVICES_REPO_PATH} && lein uberjar" # on_host "${master}" "export EZBAKE_ALLOW_UNREPRODUCIBLE_BUILDS=true EZBAKE_NODEPLOY=true; cd ${RBAC_SERVICES_REPO_PATH} && lein ezbake stage"
+  echo ""
+  echo "Built the uberjar!"
+
+  echo ""
+  echo "Moving the uberjar ..."
+  on_host "${master}" "mv ${RBAC_SERVICES_REPO_PATH}/target/console-services-release.jar /opt/puppetlabs/server/apps/console-services/console-services-release.jar"
+
+  echo "Restarting the RBAC service ..."
+  on_host "${master}" "puppet resource service pe-console-services ensure=stopped"
+  on_host "${master}" "puppet resource service pe-console-services ensure=running"
+  echo "Done!"
+
+  set +e
+}
+
+function build_bolt_server() {
+  local master="$1"
+  validate_args "build-bolt-server <master>" master
+
+  echo "Copying over bolt-server ..."
+  scp -r "/Users/enis.inan/GitHub/bolt/lib/bolt_server" "root@${master}:/opt/puppetlabs/server/apps/bolt-server/lib/ruby/gems/bolt-2.30.0/lib"
+
+  echo "Restarting the pe-bolt-server service ..."
+  on_host "${master}" "puppet resource service pe-bolt-server ensure=stopped"
+  on_host "${master}" "puppet resource service pe-bolt-server ensure=running"
 }
 
 ## End the useful functions
