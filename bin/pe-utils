@@ -716,18 +716,19 @@ function run_module_tests() {
 function setup_orch_dev_environment() {
   local ORCH_SERVICES_REPO_PATH="/Users/enis.inan/GitHub/pe-orchestration-services"
   local CONSOLE_SERVICES_REPO_PATH="/Users/enis.inan/GitHub/pe-console-services"
-  local PE_BRANCH="master"
+  local PE_PUPPETSERVER_EXTENSIONS_PATH="/Users/enis.inan/GitHub/pe-puppet-server-extensions"
 
   local master="$1"
-  validate_args "setup-orch-dev-environment <master>" master
+  local pe_branch="$2"
+  validate_args "setup-orch-dev-environment <master> <pe_branch>" master pe_branch
 
-  for repo_dir in "${ORCH_SERVICES_REPO_PATH}" "${CONSOLE_SERVICES_REPO_PATH}"; do
+  for repo_dir in "${ORCH_SERVICES_REPO_PATH}" "${CONSOLE_SERVICES_REPO_PATH}" "${PE_PUPPETSERVER_EXTENSIONS_PATH}"; do
     repo_name=`basename "${repo_dir}"`
     pushd "${repo_dir}"
       git fetch upstream
-      git checkout "${PE_BRANCH}"
-      git reset --hard upstream/"${PE_BRANCH}"
-      git push origin --force
+      git checkout "${pe_branch}"
+      git reset --hard upstream/"${pe_branch}"
+      git push --set-upstream origin --force
   
       copy_repo "." "${master}" "~/" "${repo_name}"
     popd
@@ -735,6 +736,49 @@ function setup_orch_dev_environment() {
 
   on_host "${master}" "yum install java-1.8.0-openjdk-devel -y"
   on_host "${master}" "curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein -o /bin/lein && chmod +x /bin/lein"
+}
+
+function build_puppetserver() {
+  local PUPPETSERVER_REPO_PATH="~/puppetserver"
+  local PUPPETSERVER_SERVICES_REPO_PATH="~/pe-puppet-server-extensions"
+  local PUPPETSERVER_SERVICES_JAR="target/puppet-server-release.jar"
+
+  local master="$1"
+  validate_args "build-puppetserver <master>" master
+
+  set -e
+
+  on_host "${master}" "rm -rf ${PUPPETSERVER_REPO_PATH}"
+  copy_repo "/Users/enis.inan/GitHub/puppetserver" "${master}" "~/" "puppetserver"
+
+  local puppetserver_version=""
+
+  echo "Building puppetserver's JAR ..."
+  on_host "${master}" "rm -rf ${PUPPETSERVER_REPO_PATH}/target"
+  puppetserver_version=`on_host "${master}" "sed -n 's/.*def.*ps-version.*\"\(.*\)\")/\\1/p' ${PUPPETSERVER_REPO_PATH}/project.clj" | tail -n 1`
+  puppetserver_version=`echo "${puppetserver_version}" | sed -E 's///g'`
+  on_host "${master}" "cd ${PUPPETSERVER_REPO_PATH} && lein install"
+  echo "Built the puppetserver jar!"
+
+  echo ""
+  echo "Building the uberjar ..."
+  on_host "${master}" "rm -rf ${PUPPETSERVER_SERVICES_REPO_PATH}/target"
+  on_host "${master}" "sed 's:\\(def.*\\sps-version.*\\)\".*\"\(.*\):\\1\"${puppetserver_version}\"\\2:g' ${PUPPETSERVER_SERVICES_REPO_PATH}/project.clj > ${PUPPETSERVER_SERVICES_REPO_PATH}/new_project.clj"
+  on_host "${master}" "mv "${PUPPETSERVER_SERVICES_REPO_PATH}/new_project.clj" ${PUPPETSERVER_SERVICES_REPO_PATH}/project.clj"
+  on_host "${master}" "cd ${PUPPETSERVER_SERVICES_REPO_PATH} && lein uberjar"
+  echo ""
+  echo "Built the uberjar!"
+
+  echo ""
+  echo "Moving the uberjar ..."
+  on_host "${master}" "mv ${PUPPETSERVER_SERVICES_REPO_PATH}/target/puppet-server-release.jar /opt/puppetlabs/server/apps/puppetserver/puppet-server-release.jar"
+
+  echo "Restarting the pe-puppetserver service ..."
+  on_host "${master}" "puppet resource service pe-puppetserver ensure=stopped"
+  on_host "${master}" "puppet resource service pe-puppetserver ensure=running"
+  echo "Done!"
+
+  set +e
 }
 
 function build_orch() {
@@ -829,11 +873,26 @@ function build_bolt_server() {
   validate_args "build-bolt-server <master>" master
 
   echo "Copying over bolt-server ..."
-  scp -r "/Users/enis.inan/GitHub/bolt/lib/bolt_server" "root@${master}:/opt/puppetlabs/server/apps/bolt-server/lib/ruby/gems/bolt-2.30.0/lib"
+  scp -r "/Users/enis.inan/GitHub/bolt/bolt-modules" "root@${master}:/opt/puppetlabs/server/apps/bolt-server/lib/ruby/gems/bolt-3.12.0"
+  scp -r "/Users/enis.inan/GitHub/bolt/lib/bolt" "root@${master}:/opt/puppetlabs/server/apps/bolt-server/lib/ruby/gems/bolt-3.12.0/lib"
+  scp -r "/Users/enis.inan/GitHub/bolt/lib/bolt_server" "root@${master}:/opt/puppetlabs/server/apps/bolt-server/lib/ruby/gems/bolt-3.12.0/lib"
 
   echo "Restarting the pe-bolt-server service ..."
   on_host "${master}" "puppet resource service pe-bolt-server ensure=stopped"
   on_host "${master}" "puppet resource service pe-bolt-server ensure=running"
+}
+
+function build_ace_server() {
+  local master="$1"
+  validate_args "build-ace-server <master>" master
+
+  echo "Copying over ace-server ..."
+  scp -r "/Users/enis.inan/GitHub/ace/lib/ace" "root@${master}:/opt/puppetlabs/server/apps/ace-server/lib/ruby/gems/agentless-catalog-executor-1.2.4/lib"
+#  scp -r "/Users/enis.inan/GitHub/bolt/lib/bolt_server" "root@${master}:/opt/puppetlabs/server/apps/bolt-server/lib/ruby/gems/bolt-3.12.0/lib"
+
+  echo "Restarting the pe-ace-server service ..."
+  on_host "${master}" "puppet resource service pe-ace-server ensure=stopped"
+  on_host "${master}" "puppet resource service pe-ace-server ensure=running"
 }
 
 ## End the useful functions
